@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>360 Image Uploader</title>
+    <style>
+        body { font-family: Arial; padding: 50px; text-align: center; background: #f4f4f9; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; }
+        input[type="file"] { margin: 20px 0; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Upload 360° Images for Item</h2>
+        <p>Select up to 6 images to upload to your FastAPI server.</p>
+
+        <form action="http://127.0.0.1:8000/items/1/images/" method="POST" enctype="multipart/form-data">
+            
+            <input type="file" name="files" multiple accept="image/*" required>
+            <br>
+            <button type="submit">Upload Images to Server</button>
+            
+        </form>
+    </div>
+
+</body>
+</html>

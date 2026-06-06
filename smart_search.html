@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Smart Search - Campus Lost & Found</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 40px; display: flex; flex-direction: column; align-items: center; }
+        .search-container { width: 100%; max-width: 600px; text-align: center; }
+        h1 { color: #1a73e8; font-size: 36px; margin-bottom: 10px; }
+        p { color: #5f6368; margin-bottom: 30px; }
+        
+        .search-box { display: flex; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 25px; overflow: hidden; background: white; }
+        input { flex: 1; padding: 15px 25px; border: none; font-size: 18px; outline: none; }
+        button { background: #1a73e8; color: white; border: none; padding: 0 30px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        button:hover { background: #1557b0; }
+
+        .results { width: 100%; max-width: 600px; margin-top: 30px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid #ccc; display: flex; justify-content: space-between; align-items: center;}
+        .card.Lost { border-left-color: #dc3545; } /* Red for Lost */
+        .card.Found { border-left-color: #28a745; } /* Green for Found */
+        
+        .item-details h3 { margin: 0 0 5px 0; color: #333; }
+        .item-details p { margin: 0; font-size: 14px; color: #666; }
+        
+        .confidence-badge { background: #e8f0fe; color: #1a73e8; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+        .confidence-high { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+
+    <div class="search-container">
+        <h1>Lost & Found System</h1>
+        <p>Describe your item. Our AI will find the closest matches across campus.</p>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="e.g., blue water tumbler with a scratch" onkeypress="handleEnter(event)">
+            <button onclick="performSearch()">Search</button>
+        </div>
+    </div>
+
+    <div class="results" id="resultsContainer">
+        <!-- AI Results will magically appear here -->
+    </div>
+
+    <script>
+        // Allow users to press "Enter" on their keyboard to search
+        function handleEnter(event) {
+            if (event.key === "Enter") {
+                performSearch();
+            }
+        }
+
+        async function performSearch() {
+            const query = document.getElementById("searchInput").value;
+            const container = document.getElementById("resultsContainer");
+            
+            if (!query) {
+                alert("Please type something to search!");
+                return;
+            }
+
+            container.innerHTML = "<p style='text-align: center;'>Thinking... 🤔</p>";
+
+            try {
+                // Call your Python AI Endpoint
+                const response = await fetch(`http://127.0.0.1:8000/search/?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                container.innerHTML = ""; // Clear the loading text
+
+                if (data.results.length === 0) {
+                    container.innerHTML = "<p style='text-align: center;'>No matches found. Try different words!</p>";
+                    return;
+                }
+
+                // Loop through the results and build the HTML cards
+                data.results.forEach(item => {
+                    // Make the badge green if it's a really high match (>75%)
+                    const badgeClass = item.confidence >= 75 ? "confidence-high" : "";
+                    
+                    const card = `
+                        <div class="card ${item.type}">
+                            <div class="item-details">
+                                <h3>[${item.type}] ${item.title}</h3>
+                                <p>ID: ${item.id} | ${item.description || "No description provided."}</p>
+                            </div>
+                            <div class="confidence-badge ${badgeClass}">
+                                ${item.confidence}% Match
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+
+            } catch (error) {
+                container.innerHTML = `<p style="color: red; text-align: center;">Error connecting to the server. Is Uvicorn running?</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

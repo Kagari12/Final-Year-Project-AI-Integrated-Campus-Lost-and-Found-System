@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost & Found System</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
+        
+        /* Navigation Bar */
+        .navbar { background-color: #1a73e8; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .navbar h2 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+        .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-weight: bold; transition: opacity 0.3s; }
+        .nav-links a:hover { opacity: 0.8; }
+        .admin-link { background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; }
+
+        /* Hero Section */
+        .hero { text-align: center; padding: 80px 20px; background: linear-gradient(to right, #1a73e8, #4285f4); color: white; }
+        .hero h1 { font-size: 48px; margin-bottom: 10px; }
+        .hero p { font-size: 20px; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; opacity: 0.9; }
+
+        /* Dashboard Grid */
+        .container { max-width: 1000px; margin: -40px auto 40px auto; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        
+        /* Feature Cards */
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.08); text-align: center; transition: transform 0.3s; text-decoration: none; color: #333; display: block; border-top: 5px solid transparent; }
+        .card:hover { transform: translateY(-5px); }
+        .card h3 { font-size: 22px; margin-bottom: 10px; }
+        .card p { color: #666; font-size: 15px; margin-bottom: 20px; }
+        
+        /* Card Accents */
+        .card-report { border-top-color: #34a853; }
+        .card-search { border-top-color: #fbbc05; }
+        .card-map { border-top-color: #ea4335; }
+        
+        .icon { font-size: 40px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <div class="navbar">
+        <h2>Lost & Found System</h2>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="smart_search.html">Smart Search</a>
+            <a href="campus_map.html">Live Map</a>
+            <!-- Admin link styled slightly differently to stand out -->
+            <a href="admin_dashboard.html" class="admin-link">🛡️ Security Login</a>
+        </div>
+    </div>
+
+    <!-- Welcome Hero Area -->
+    <div class="hero">
+        <h1>Did you lose something?</h1>
+        <p>Lost & Found System</p>
+    </div>
+
+    <!-- Main Tool Selection -->
+    <div class="container">
+        
+        <!-- Link to the GPS Reporting Form -->
+        <a href="report_item.html" class="card card-report">
+            <div class="icon">📢</div>
+            <h3>Report an Item</h3>
+            <p>Found a lost item? Or lost something yourself? Pin it on the campus map with your GPS.</p>
+        </a>
+
+        <!-- Link to the AI Search -->
+        <a href="smart_search.html" class="card card-search">
+            <div class="icon">🔍</div>
+            <h3>AI Smart Search</h3>
+            <p>Describe what you lost. Our fuzzy-logic AI will scan the database for the closest match.</p>
+        </a>
+
+        <!-- Link to the Analytics Map -->
+        <a href="campus_map.html" class="card card-map">
+            <div class="icon">📍</div>
+            <h3>Live Campus Map</h3>
+            <p>View real-time spatial analytics. See exactly where items are being dropped across the university.</p>
+        </a>
+
+    </div>
+
+</body>
+</html>

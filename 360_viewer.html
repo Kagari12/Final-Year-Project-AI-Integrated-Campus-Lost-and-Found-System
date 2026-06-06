@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>360° Item Preview</title>
+    <style>
+        body { font-family: Arial; padding: 40px; text-align: center; background: #222; color: white; }
+        .card { background: #333; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        input { padding: 10px; border-radius: 5px; border: none; font-size: 16px; margin-right: 10px; }
+        button { background: #ff9800; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        button:hover { background: #e68a00; }
+        
+        /* The 360 Viewer Box */
+        #viewer-container { margin-top: 30px; display: none; }
+        #item-image { 
+            width: 400px; 
+            height: 400px; 
+            object-fit: cover; 
+            border-radius: 10px; 
+            cursor: ew-resize; /* Changes mouse to a left-right drag icon */
+            user-select: none; /* Prevents the image from being highlighted */
+        }
+        .instructions { color: #aaa; font-size: 14px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>🔍 Inspect Recovered Item</h2>
+        <input type="number" id="itemId" placeholder="Enter Item ID (e.g., 1)">
+        <button onclick="loadImages()">Load 360 View</button>
+        
+        <div id="viewer-container">
+            <img id="item-image" draggable="false" src="">
+            <p class="instructions">↔️ Click and drag left or right to rotate the item</p>
+        </div>
+    </div>
+
+    <script>
+        let images = [];
+        let currentIndex = 0;
+        let isDragging = false;
+        let startX = 0;
+
+        // 1. Fetch the images from your Python API
+        async function loadImages() {
+            const itemId = document.getElementById("itemId").value;
+            const response = await fetch(`http://127.0.0.1:8000/items/${itemId}/images/`);
+            const data = await response.json();
+            
+            if (data.images && data.images.length > 0) {
+                // Add the server address to the image paths
+                images = data.images.map(path => `http://127.0.0.1:8000${path}`);
+                
+                // Show the viewer and load the first image
+                document.getElementById("viewer-container").style.display = "block";
+                document.getElementById("item-image").src = images[0];
+            } else {
+                alert("No images found! Make sure you uploaded images for this ID.");
+            }
+        }
+
+        // 2. The 360 Rotation Logic
+        const imgElement = document.getElementById("item-image");
+
+        // When mouse clicks down, start tracking
+        imgElement.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.pageX;
+        });
+
+        // When mouse lets go, stop tracking
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // When mouse moves, swap images based on direction
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging || images.length === 0) return;
+            
+            let dragDistance = e.pageX - startX;
+            
+            // Sensitivity: Change image every 20 pixels the mouse moves
+            if (Math.abs(dragDistance) > 20) {
+                if (dragDistance > 0) {
+                    // Dragged Right
+                    currentIndex = (currentIndex + 1) % images.length;
+                } else {
+                    // Dragged Left
+                    currentIndex = (currentIndex - 1 + images.length) % images.length;
+                }
+                
+                // Update the image on screen
+                imgElement.src = images[currentIndex];
+                startX = e.pageX; // Reset starting point
+            }
+        });
+    </script>
+</body>
+</html>

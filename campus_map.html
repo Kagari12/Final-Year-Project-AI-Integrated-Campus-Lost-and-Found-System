@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Campus Spatial Analytics</title>
+    <!-- Import Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; }
+        .header { background: #343a40; color: white; padding: 20px; text-align: center; }
+        .stats { display: flex; justify-content: center; gap: 20px; padding: 15px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stat-box { padding: 10px 20px; border-radius: 5px; font-weight: bold; }
+        .stat-lost { background: #ffeeba; color: #856404; }
+        .stat-found { background: #d4edda; color: #155724; }
+        
+        /* The Map Container */
+        #map { height: 600px; width: 90%; margin: 20px auto; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 2px solid #ccc; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>📍 Lost & Found Spatial Analytics</h1>
+        <p>Live GPS tracking of reported items</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-box stat-lost" id="lostCount">Lost Items: 0</div>
+        <div class="stat-box stat-found" id="foundCount">Found Items: 0</div>
+    </div>
+
+    <!-- The map will be drawn inside this div -->
+    <div id="map"></div>
+
+    <script>
+        // 1. Initialize the map and set the default camera view to coordinates [5.2950, 100.2849]
+        var map = L.map('map').setView([5.2950, 100.2849], 14);
+
+        // 2. Load the map tiles (the actual street drawings) from OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // 3. Fetch data from your Python Server
+        async function loadMapData() {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/items/");
+                const items = await response.json();
+                
+                let lostCount = 0;
+                let foundCount = 0;
+
+                items.forEach(item => {
+                    // Only map items that actually have GPS coordinates saved
+                    if (item.latitude && item.longitude) {
+                        
+                        // Decide the color based on the item type
+                        let markerColor = item.item_type === "Lost" ? "red" : "green";
+                        
+                        // Keep track of the stats
+                        if (item.item_type === "Lost") lostCount++;
+                        if (item.item_type === "Found") foundCount++;
+
+                        // Create a colored circle marker
+                        var circle = L.circleMarker([item.latitude, item.longitude], {
+                            color: markerColor,
+                            fillColor: markerColor,
+                            fillOpacity: 0.7,
+                            radius: 10
+                        }).addTo(map);
+
+                        // Add a popup bubble when the marker is clicked
+                        circle.bindPopup(`
+                            <b>[${item.item_type}] ${item.title}</b><br>
+                            ID: ${item.id}<br>
+                            ${item.description || "No description"}
+                        `);
+                    }
+                });
+
+                // Update the stats at the top of the page
+                document.getElementById("lostCount").innerText = `Lost Items: ${lostCount}`;
+                document.getElementById("foundCount").innerText = `Found Items: ${foundCount}`;
+
+            } catch (error) {
+                console.error("Error loading map data:", error);
+                alert("Could not load map data. Make sure your Uvicorn server is running!");
+            }
+        }
+
+        // Run the function as soon as the page loads
+        loadMapData();
+    </script>
+</body>
+</html>

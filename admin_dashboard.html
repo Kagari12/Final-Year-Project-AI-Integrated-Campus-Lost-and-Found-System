@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Intelligent Campus Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex h-screen overflow-hidden font-sans">
+
+    <aside class="w-64 bg-gray-900 text-white flex flex-col">
+        <div class="p-6 border-b border-gray-800">
+            <h2 class="text-2xl font-bold text-blue-400">Campus Admin</h2>
+            <p class="text-xs text-gray-400 mt-1">Security Level: Maximum</p>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="#" class="flex items-center p-3 bg-blue-600 text-white rounded-lg">
+                <i class="fas fa-chart-line w-6"></i> Dashboard & Analytics
+            </a>
+            <a href="#" class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg transition">
+                <i class="fas fa-users w-6"></i> Manage User Accounts
+            </a>
+            <a href="#" class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg transition">
+                <i class="fas fa-box-open w-6"></i> Review Pending Claims
+            </a>
+            <a href="#" class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg transition">
+                <i class="fas fa-cog w-6"></i> System Settings
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-800">
+            <button class="w-full flex items-center justify-center p-2 bg-red-600 hover:bg-red-700 rounded text-white transition">
+                <i class="fas fa-sign-out-alt mr-2"></i> Log Out
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <header class="bg-white shadow-sm p-6 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">System Overview & Analytics</h1>
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                    AD
+                </div>
+                <span class="font-medium text-gray-700">Administrator</span>
+            </div>
+        </header>
+
+        <div class="p-6 space-y-6">
+            <div class="grid grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-gray-500 text-sm font-semibold uppercase">Total Items Recovered</h3>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">142</p>
+                    <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up"></i> 12% from last month</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-gray-500 text-sm font-semibold uppercase">AI Classification Accuracy</h3>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">94.8%</p>
+                    <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up"></i> Model v2.1 Active</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-gray-500 text-sm font-semibold uppercase">Active Claims Pending</h3>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">18</p>
+                    <p class="text-orange-500 text-sm mt-2"><i class="fas fa-exclamation-circle"></i> Requires Verification</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Monthly Campus Recovery Rates</h3>
+                <div class="h-64">
+                    <canvas id="recoveryChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800">Live Item Database</h3>
+                    <button onclick="loadDashboard()" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded transition">
+                        <i class="fas fa-sync-alt mr-1"></i> Refresh Data
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-sm uppercase">
+                                <th class="p-4 font-semibold">ID</th>
+                                <th class="p-4 font-semibold">Status</th>
+                                <th class="p-4 font-semibold">Item Title</th>
+                                <th class="p-4 font-semibold">Description</th>
+                                <th class="p-4 font-semibold">GPS Coordinates</th>
+                                <th class="p-4 font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-gray-100 text-sm text-gray-700">
+                            <tr><td colspan="6" class="p-6 text-center text-gray-500">Loading database...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- 1. RENDER THE STATISTICAL GRAPH ---
+        const ctx = document.getElementById('recoveryChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Items Successfully Returned',
+                    data: [12, 19, 25, 32, 28, 45],
+                    borderColor: '#2563eb', // Blue-600
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // --- 2. FETCH DATA FROM YOUR PYTHON SERVER ---
+        async function loadDashboard() {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/items/");
+                const items = await response.json();
+                const tbody = document.getElementById("table-body");
+                tbody.innerHTML = ""; 
+
+                if (items.length === 0) {
+                    tbody.innerHTML = "<tr><td colspan='6' class='p-6 text-center text-gray-500'>Database is empty. No items reported.</td></tr>";
+                    return;
+                }
+
+                items.forEach(item => {
+                    // Tailwind badges based on Lost or Found
+                    const badgeClass = item.item_type === "Lost" 
+                        ? "bg-red-100 text-red-800" 
+                        : "bg-green-100 text-green-800";
+                    
+                    const coords = (item.latitude && item.longitude) 
+                        ? `<i class="fas fa-map-marker-alt text-gray-400 mr-1"></i> ${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}` 
+                        : "<span class='text-gray-400'>No GPS data</span>";
+                    
+                    const row = `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="p-4 font-medium text-gray-900">#${item.id}</td>
+                            <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">${item.item_type}</span></td>
+                            <td class="p-4 font-medium">${item.title}</td>
+                            <td class="p-4 text-gray-500">${item.description || "-"}</td>
+                            <td class="p-4">${coords}</td>
+                            <td class="p-4 flex space-x-2">
+                                <button onclick="window.open('360_viewer.html?id=${item.id}', '_blank')" class="bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded text-xs font-bold transition">
+                                    <i class="fas fa-cube mr-1"></i> 360
+                                </button>
+                                <button onclick="resolveItem(${item.id})" class="bg-green-100 text-green-600 hover:bg-green-200 px-3 py-1 rounded text-xs font-bold transition">
+                                    <i class="fas fa-check mr-1"></i> Resolve
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (error) {
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="6" class="p-6 text-center text-red-500 font-bold"><i class="fas fa-exclamation-triangle mr-2"></i> Server offline! Please start Uvicorn.</td></tr>`;
+            }
+        }
+
+        async function resolveItem(itemId) {
+            if (confirm(`Are you sure you want to resolve and delete Item #${itemId}?`)) {
+                try {
+                    const response = await fetch(`http://127.0.0.1:8000/items/${itemId}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        loadDashboard(); 
+                    } else {
+                        alert("Error resolving item.");
+                    }
+                } catch (error) {
+                    alert("Server error. Is Uvicorn running?");
+                }
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>
