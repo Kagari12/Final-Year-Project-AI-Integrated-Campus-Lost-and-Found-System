@@ -1,97 +1,541 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Campus Spatial Analytics</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Campus Map - Campus Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Import Leaflet CSS and JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; }
-        .header { background: #343a40; color: white; padding: 20px; text-align: center; }
-        .stats { display: flex; justify-content: center; gap: 20px; padding: 15px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .stat-box { padding: 10px 20px; border-radius: 5px; font-weight: bold; }
-        .stat-lost { background: #ffeeba; color: #856404; }
-        .stat-found { background: #d4edda; color: #155724; }
-        
-        /* The Map Container */
-        #map { height: 600px; width: 90%; margin: 20px auto; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 2px solid #ccc; }
+        .map-hero-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 50%, #1e3a8a 100%);
+        }
+
+        /* Ensure Leaflet Map stays below sticky navbar and modals */
+        #map {
+            height: 580px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        /* Modal Overlay */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #modal-image {
+            width: 100%;
+            max-width: 400px;
+            height: 360px;
+            object-fit: cover;
+            border-radius: 12px;
+            cursor: ew-resize;
+            user-select: none;
+            background: #1e293b;
+            margin: 15px auto 0 auto;
+            display: block;
+        }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <div class="header">
-        <h1>📍 Lost & Found Spatial Analytics</h1>
-        <p>Live GPS tracking of reported items</p>
+    <!-- ==================== TOP NAVIGATION BAR ==================== -->
+    <nav class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            
+            <!-- Brand Logo -->
+            <a href="index.html" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-600/30 group-hover:scale-105 transition">
+                    <i class="fas fa-satellite-dish text-lg"></i>
+                </div>
+                <div>
+                    <span class="text-lg font-extrabold tracking-tight text-gray-900">Campus<span class="text-blue-600">Portal</span></span>
+                    <span class="block text-[10px] font-semibold uppercase tracking-widest text-gray-400 -mt-1">Lost &amp; Found AI</span>
+                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <div class="hidden md:flex items-center space-x-1">
+                <a href="index.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-home mr-1.5"></i> Home
+                </a>
+                <a href="report_item.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-bullhorn mr-1.5"></i> Report Item
+                </a>
+                <a href="smart_search.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-brain mr-1.5"></i> Smart Search
+                </a>
+                <a href="campus_map.html" class="px-4 py-2 rounded-lg text-sm font-bold text-blue-600 bg-blue-50 transition">
+                    <i class="fas fa-map-marked-alt mr-1.5"></i> Live Map
+                </a>
+                <a id="admin-nav-btn" href="admin_dashboard.html" class="hidden ml-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition">
+                    <i class="fas fa-shield-alt mr-1"></i> Admin Dashboard
+                </a>
+            </div>
+
+            <!-- User Profile Display -->
+            <div id="user-profile-section" class="hidden items-center space-x-3 pl-4 border-l border-gray-200">
+                <div class="flex items-center space-x-2.5">
+                    <div id="user-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                        ST
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <p class="text-[11px] font-semibold text-emerald-600 flex items-center">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span> Verified Student
+                        </p>
+                        <p id="user-email-display" class="text-xs font-bold text-gray-700 truncate max-w-[160px]">Loading...</p>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 hover:border-red-600 text-xs font-bold px-3.5 py-2 rounded-xl transition duration-200 flex items-center shadow-sm">
+                    <i class="fas fa-sign-out-alt sm:mr-1.5"></i>
+                    <span class="hidden sm:inline">Logout</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ==================== HEADER & LIVE SPATIAL STATS ==================== -->
+    <section class="map-hero-bg text-white py-8 px-4 shadow-md">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <div class="inline-flex items-center space-x-2 bg-white/10 border border-white/20 px-3 py-0.5 rounded-full text-xs font-semibold text-blue-200 mb-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Real-Time Geolocation Telemetry</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">📍 Lost &amp; Found Spatial Analytics</h1>
+                <p class="text-blue-100 text-xs sm:text-sm mt-1">Live GPS tracking of active reported items across the university campus (Resolved cases are hidden).</p>
+            </div>
+
+            <!-- Live Stat Pills -->
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-2xl flex items-center space-x-3">
+                    <span class="w-3.5 h-3.5 rounded-full bg-red-500 ring-4 ring-red-500/30"></span>
+                    <div>
+                        <p class="text-[10px] uppercase tracking-wider text-blue-200 font-bold">Lost Pins</p>
+                        <p id="lostCount" class="text-lg font-extrabold text-white">Lost Items: 0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-2xl flex items-center space-x-3">
+                    <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/30"></span>
+                    <div>
+                        <p class="text-[10px] uppercase tracking-wider text-blue-200 font-bold">Found Pins</p>
+                        <p id="foundCount" class="text-lg font-extrabold text-white">Found Items: 0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== MAIN MAP & SIDEBAR WORKSPACE ==================== -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+        
+        <!-- Filter & Map Control Bar -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-6 flex flex-wrap items-center justify-between gap-3">
+            <!-- Type Filter Pills -->
+            <div class="flex items-center space-x-1 bg-gray-100 p-1 rounded-xl">
+                <button onclick="setMapTypeFilter('ALL')" id="map-btn-ALL" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-600 shadow-sm transition">
+                    All Active Pins
+                </button>
+                <button onclick="setMapTypeFilter('Lost')" id="map-btn-Lost" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition">
+                    🔴 Lost Only
+                </button>
+                <button onclick="setMapTypeFilter('Found')" id="map-btn-Found" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition">
+                    🟢 Found Only
+                </button>
+            </div>
+
+            <!-- Category & Location Search Filter -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <select id="map-category-filter" onchange="renderMapMarkers()" class="border border-gray-300 rounded-xl px-3 py-1.5 text-xs font-semibold bg-white text-gray-700 focus:outline-none focus:border-blue-500">
+                    <option value="ALL">All Categories</option>
+                </select>
+
+                <input type="text" id="map-search-filter" oninput="renderMapMarkers()" placeholder="Filter by room/item (e.g. LR305)..." class="border border-gray-300 rounded-xl px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-blue-500 w-48">
+
+                <button onclick="resetCameraView()" class="bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs px-3.5 py-1.5 rounded-xl transition flex items-center">
+                    <i class="fas fa-compress-arrows-alt mr-1.5"></i> Reset Map View
+                </button>
+
+                <button onclick="loadMapData()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-3.5 py-1.5 rounded-xl transition flex items-center">
+                    <i class="fas fa-sync-alt mr-1.5"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Map + Interactive Pin List Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Leaflet Map Container (8 Cols) -->
+            <div class="lg:col-span-8 bg-white p-3 rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div id="map" class="rounded-xl border border-gray-200"></div>
+            </div>
+
+            <!-- Pinned Items Directory Sidebar (4 Cols) -->
+            <div class="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" style="height: 604px;">
+                <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-sm font-extrabold text-gray-900">Pinned Campus Items</h3>
+                        <p id="pinned-list-subtitle" class="text-[11px] text-gray-500">Click an item to zoom to its GPS pin</p>
+                    </div>
+                    <a href="report_item.html" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition">
+                        + Pin Item
+                    </a>
+                </div>
+
+                <div id="pinned-items-list" class="p-3 space-y-2.5 overflow-y-auto flex-1">
+                    <div class="p-6 text-center text-xs text-gray-400">Loading GPS pins...</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ==================== 360° PHOTO INSPECTION MODAL ==================== -->
+    <div id="viewer-modal" class="modal">
+        <div class="bg-slate-900 text-white p-6 rounded-2xl w-11/12 max-w-md text-center relative shadow-2xl border border-slate-700">
+            <button onclick="closeViewer()" class="absolute top-3 right-4 text-2xl text-gray-400 hover:text-red-400 font-bold">&times;</button>
+            <h3 class="text-lg font-bold text-blue-400 flex items-center justify-center">
+                <i class="fas fa-cube mr-2"></i> 360° Item Inspection
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">↔️ Click and drag left or right to rotate item</p>
+            <img id="modal-image" draggable="false" src="" alt="Item 360 Preview">
+            <p id="modal-loading" class="text-amber-400 text-xs font-semibold mt-3 hidden">Loading photos...</p>
+            <p id="modal-frame-counter" class="text-[11px] text-slate-400 mt-2"></p>
+        </div>
     </div>
 
-    <div class="stats">
-        <div class="stat-box stat-lost" id="lostCount">Lost Items: 0</div>
-        <div class="stat-box stat-found" id="foundCount">Found Items: 0</div>
-    </div>
-
-    <!-- The map will be drawn inside this div -->
-    <div id="map"></div>
-
+    <!-- ==================== LEAFLET MAP & SPATIAL ANALYTICS LOGIC ==================== -->
     <script>
-        // 1. Initialize the map and set the default camera view to coordinates [5.2950, 100.2849]
-        var map = L.map('map').setView([5.2950, 100.2849], 14);
+        const DEFAULT_COORDS = [5.2950, 100.2849];
+        const DEFAULT_ZOOM = 15;
 
-        // 2. Load the map tiles (the actual street drawings) from OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // 1. Initialize Leaflet Map
+        var map = L.map('map').setView(DEFAULT_COORDS, DEFAULT_ZOOM);
+
+        // 2. Load Esri World Street Map Tiles
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
-            attribution: '© OpenStreetMap'
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN'
         }).addTo(map);
 
-        // 3. Fetch data from your Python Server
+        // Layer group to manage & clear markers cleanly when filtering
+        var markersLayer = L.layerGroup().addTo(map);
+        var markerDictionary = {}; // Maps item.id -> Leaflet circleMarker
+        var activeCampusItems = [];
+        var currentMapTypeFilter = 'ALL';
+
+        // Helper: Check if an item was marked as Resolved by Admin
+        function isItemResolved(item) {
+            const resolvedMap = JSON.parse(localStorage.getItem("resolved_cases_map") || "{}");
+            return item.claim_status === "Resolved" || item.status === "Resolved" || Boolean(resolvedMap[item.id]);
+        }
+
+        function populateCategoryDropdown(items) {
+            const selectEl = document.getElementById('map-category-filter');
+            const currentVal = selectEl.value;
+            const categories = [...new Set(items.map(i => i.title).filter(Boolean))].sort();
+
+            selectEl.innerHTML = '<option value="ALL">All Categories</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                selectEl.appendChild(opt);
+            });
+
+            if (categories.includes(currentVal)) {
+                selectEl.value = currentVal;
+            }
+        }
+
+        function setMapTypeFilter(type) {
+            currentMapTypeFilter = type;
+            ['ALL', 'Lost', 'Found'].forEach(t => {
+                const btn = document.getElementById(`map-btn-${t}`);
+                if (t === type) {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-600 shadow-sm transition";
+                } else {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition";
+                }
+            });
+            renderMapMarkers();
+        }
+
+        function resetCameraView() {
+            const bounds = [];
+            Object.values(markerDictionary).forEach(m => bounds.push(m.getLatLng()));
+            if (bounds.length > 0) {
+                map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40], maxZoom: 17 });
+            } else {
+                map.setView(DEFAULT_COORDS, DEFAULT_ZOOM);
+            }
+        }
+
+        function focusOnPin(itemId) {
+            const marker = markerDictionary[itemId];
+            if (marker) {
+                map.flyTo(marker.getLatLng(), 18, { duration: 0.8 });
+                marker.openPopup();
+            }
+        }
+
+        function openItemInSmartSearch(itemId) {
+            localStorage.setItem("selected_item_id", itemId);
+            window.location.href = `smart_search.html?item_id=${encodeURIComponent(itemId)}`;
+        }
+
+        // 3. Fetch Data from FastAPI Server & Exclude Resolved Cases
         async function loadMapData() {
             try {
                 const response = await fetch("http://127.0.0.1:8000/items/");
                 const items = await response.json();
-                
-                let lostCount = 0;
-                let foundCount = 0;
 
-                items.forEach(item => {
-                    // Only map items that actually have GPS coordinates saved
-                    if (item.latitude && item.longitude) {
-                        
-                        // Decide the color based on the item type
-                        let markerColor = item.item_type === "Lost" ? "red" : "green";
-                        
-                        // Keep track of the stats
-                        if (item.item_type === "Lost") lostCount++;
-                        if (item.item_type === "Found") foundCount++;
+                // Only keep active (unresolved) items that have valid GPS coordinates
+                activeCampusItems = items.filter(item =>
+                    !isItemResolved(item) &&
+                    item.latitude !== null &&
+                    item.longitude !== null &&
+                    !isNaN(Number(item.latitude)) &&
+                    !isNaN(Number(item.longitude))
+                );
 
-                        // Create a colored circle marker
-                        var circle = L.circleMarker([item.latitude, item.longitude], {
-                            color: markerColor,
-                            fillColor: markerColor,
-                            fillOpacity: 0.7,
-                            radius: 10
-                        }).addTo(map);
-
-                        // Add a popup bubble when the marker is clicked
-                        circle.bindPopup(`
-                            <b>[${item.item_type}] ${item.title}</b><br>
-                            ID: ${item.id}<br>
-                            ${item.description || "No description"}
-                        `);
-                    }
-                });
-
-                // Update the stats at the top of the page
-                document.getElementById("lostCount").innerText = `Lost Items: ${lostCount}`;
-                document.getElementById("foundCount").innerText = `Found Items: ${foundCount}`;
+                populateCategoryDropdown(activeCampusItems);
+                renderMapMarkers(true);
 
             } catch (error) {
                 console.error("Error loading map data:", error);
-                alert("Could not load map data. Make sure your Uvicorn server is running!");
+                document.getElementById("pinned-items-list").innerHTML = `
+                    <div class="p-6 text-center text-red-500 text-xs font-bold">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> Could not load map data. Make sure your Uvicorn server is running!
+                    </div>
+                `;
             }
         }
 
-        // Run the function as soon as the page loads
+        function renderMapMarkers(autoFit = false) {
+            markersLayer.clearLayers();
+            markerDictionary = {};
+
+            const categoryFilter = document.getElementById('map-category-filter').value;
+            const searchQuery = (document.getElementById('map-search-filter').value || '').trim().toLowerCase();
+
+            let lostCount = 0;
+            let foundCount = 0;
+
+            const filteredItems = activeCampusItems.filter(item => {
+                if (currentMapTypeFilter !== 'ALL' && item.item_type !== currentMapTypeFilter) return false;
+                if (categoryFilter !== 'ALL' && item.title !== categoryFilter) return false;
+                if (searchQuery !== '') {
+                    const hay = `${item.title || ''} ${item.description || ''} ${item.specific_location || ''}`.toLowerCase();
+                    if (!hay.includes(searchQuery)) return false;
+                }
+                return true;
+            });
+
+            filteredItems.forEach(item => {
+                const isLost = item.item_type === "Lost";
+                const strokeColor = isLost ? "#dc2626" : "#059669";
+                const fillColor = isLost ? "#ef4444" : "#10b981";
+
+                if (isLost) lostCount++;
+                else foundCount++;
+
+                const circle = L.circleMarker([Number(item.latitude), Number(item.longitude)], {
+                    color: strokeColor,
+                    weight: 2,
+                    fillColor: fillColor,
+                    fillOpacity: 0.8,
+                    radius: 11
+                }).addTo(markersLayer);
+
+                const locText = item.specific_location || "Campus Pin";
+                const descText = item.description || "No description provided.";
+
+                circle.bindPopup(`
+                    <div style="min-width: 210px; font-family: 'Segoe UI', sans-serif;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <span style="background:${isLost ? '#fee2e2' : '#d1fae5'}; color:${isLost ? '#b91c1c' : '#047857'}; font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px;">
+                                ${item.item_type}
+                            </span>
+                            <span style="font-size:11px; color:#94a3b8; font-weight:700;">#${item.id}</span>
+                        </div>
+                        <div style="font-weight:800; font-size:14px; color:#0f172a; margin-bottom:2px;">${item.title}</div>
+                        <div style="font-size:11px; color:#2563eb; font-weight:700; margin-bottom:6px;">📍 ${locText}</div>
+                        <div style="font-size:12px; color:#475569; margin-bottom:10px;">${descText}</div>
+                        <div style="display:flex; gap:6px;">
+                            <button onclick="openViewer(${item.id})" style="flex:1; background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; border-radius:6px; padding:5px 8px; font-size:11px; font-weight:700; cursor:pointer;">
+                                360° Photo
+                            </button>
+                            <button onclick="openItemInSmartSearch(${item.id})" style="flex:1; background:#2563eb; color:white; border:none; border-radius:6px; padding:5px 8px; font-size:11px; font-weight:700; cursor:pointer;">
+                                Inspect / Claim
+                            </button>
+                        </div>
+                    </div>
+                `);
+
+                markerDictionary[item.id] = circle;
+            });
+
+            // Update Top Stats
+            document.getElementById("lostCount").innerText = `Lost Items: ${lostCount}`;
+            document.getElementById("foundCount").innerText = `Found Items: ${foundCount}`;
+            document.getElementById("pinned-list-subtitle").innerText = `Showing ${filteredItems.length} active GPS pin(s)`;
+
+            // Render Sidebar List
+            const listContainer = document.getElementById("pinned-items-list");
+            if (filteredItems.length === 0) {
+                listContainer.innerHTML = `<div class="p-6 text-center text-xs text-gray-400">No active GPS-pinned items match your filter.</div>`;
+            } else {
+                listContainer.innerHTML = filteredItems.slice().reverse().map(item => {
+                    const isLost = item.item_type === "Lost";
+                    const badgeClass = isLost ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700";
+                    return `
+                        <div onclick="focusOnPin(${item.id})" class="p-3 rounded-xl border border-gray-100 hover:border-blue-300 bg-gray-50/70 hover:bg-blue-50/30 cursor-pointer transition flex flex-col justify-between">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">${item.item_type}</span>
+                                <span class="text-[11px] font-bold text-gray-400">#${item.id}</span>
+                            </div>
+                            <h4 class="text-xs font-extrabold text-gray-900 truncate">${item.title}</h4>
+                            <p class="text-[11px] text-gray-500 truncate mt-0.5"><i class="fas fa-map-pin text-red-400 mr-1"></i> ${item.specific_location || 'GPS Coordinate Pin'}</p>
+                            <div class="mt-2 pt-1.5 border-t border-gray-200/60 flex justify-between items-center text-[10px] font-bold text-blue-600">
+                                <span>${Number(item.latitude).toFixed(4)}, ${Number(item.longitude).toFixed(4)}</span>
+                                <span onclick="event.stopPropagation(); openItemInSmartSearch(${item.id});" class="hover:underline">View Details &rarr;</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            if (autoFit && filteredItems.length > 0) {
+                resetCameraView();
+            }
+        }
+
+        // --- 360° PHOTO VIEWER LOGIC ---
+        let viewerImages = [];
+        let currentIndex = 0;
+        let isDragging = false;
+        let startX = 0;
+        const imgElement = document.getElementById("modal-image");
+        const viewerModal = document.getElementById("viewer-modal");
+
+        async function openViewer(itemId) {
+            viewerImages = [];
+            const loadingEl = document.getElementById("modal-loading");
+            const counterEl = document.getElementById("modal-frame-counter");
+            loadingEl.classList.remove("hidden");
+            loadingEl.innerText = "Loading 360° photos...";
+            counterEl.innerText = "";
+            imgElement.src = "";
+            viewerModal.style.display = "flex";
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/items/${itemId}/images/`);
+                const data = await response.json();
+
+                if (data.images && data.images.length > 0) {
+                    viewerImages = data.images.map(path => path.startsWith("http") ? path : `http://127.0.0.1:8000${path}`);
+                    currentIndex = 0;
+                    imgElement.src = viewerImages[0];
+                    loadingEl.classList.add("hidden");
+                    counterEl.innerText = `Angle 1 of ${viewerImages.length}`;
+                } else {
+                    loadingEl.innerText = "No photos were uploaded for this item.";
+                }
+            } catch (e) {
+                loadingEl.innerText = "Error loading images from server.";
+            }
+        }
+
+        function closeViewer() {
+            viewerModal.style.display = "none";
+            isDragging = false;
+        }
+
+        imgElement.addEventListener('mousedown', (e) => { isDragging = true; startX = e.pageX; });
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging || viewerImages.length === 0) return;
+            let dragDistance = e.pageX - startX;
+            if (Math.abs(dragDistance) > 20) {
+                if (dragDistance > 0) {
+                    currentIndex = (currentIndex + 1) % viewerImages.length;
+                } else {
+                    currentIndex = (currentIndex - 1 + viewerImages.length) % viewerImages.length;
+                }
+                imgElement.src = viewerImages[currentIndex];
+                document.getElementById("modal-frame-counter").innerText = `Angle ${currentIndex + 1} of ${viewerImages.length}`;
+                startX = e.pageX;
+            }
+        });
+
         loadMapData();
+    </script>
+
+    <!-- ==================== FIREBASE SESSION TRACKING ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQdoln7-kt31PdjsVYy93UHWoIfWmxaMc",
+            authDomain: "campus-lost-found-e1cff.firebaseapp.com",
+            projectId: "campus-lost-found-e1cff",
+            storageBucket: "campus-lost-found-e1cff.firebasestorage.app",
+            messagingSenderId: "31986563694",
+            appId: "1:31986563694:web:a9f94142c86a437e93447f",
+            measurementId: "G-ZSCXGS57KV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const adminEmails = ["admin@student.newinti.edu.my", "security@student.newinti.edu.my"];
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('user-email-display').innerText = user.email;
+                const profileSection = document.getElementById('user-profile-section');
+                profileSection.classList.remove('hidden');
+                profileSection.classList.add('flex');
+
+                const namePart = user.email.split('@')[0];
+                document.getElementById('user-avatar').innerText = namePart.slice(0, 2).toUpperCase();
+
+                if (adminEmails.includes(user.email)) {
+                    document.getElementById('admin-nav-btn').classList.remove('hidden');
+                }
+
+                localStorage.setItem("user_uid", user.uid);
+                localStorage.setItem("user_email", user.email);
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+                localStorage.removeItem("user_uid");
+                localStorage.removeItem("user_email");
+            } catch (error) {
+                alert("Error logging out: " + error.message);
+            }
+        };
     </script>
 </body>
 </html>
