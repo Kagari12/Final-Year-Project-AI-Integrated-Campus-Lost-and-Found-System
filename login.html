@@ -5,92 +5,664 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Campus Lost & Found System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // Simple script to swap between Login and Register screens for your screenshots
-        function toggleForm(formType) {
-            if (formType === 'register') {
-                document.getElementById('login-form').classList.add('hidden');
-                document.getElementById('register-form').classList.remove('hidden');
-            } else {
-                document.getElementById('register-form').classList.add('hidden');
-                document.getElementById('login-form').classList.remove('hidden');
-            }
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        /* Animated Gradient & Particle Canvas Background */
+        body {
+            background: radial-gradient(circle at top left, #0f172a, #1e3a8a, #0f172a);
+            background-size: 200% 200%;
+            animation: gradientBG 15s ease infinite;
         }
-    </script>
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Ambient Glowing Blobs */
+        .ambient-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.45;
+            z-index: 0;
+            animation: floatBlob 10s infinite ease-in-out alternate;
+            pointer-events: none;
+        }
+        @keyframes floatBlob {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, -40px) scale(1.15); }
+        }
+
+        /* Radar Pulse Animation */
+        .radar-ring {
+            position: absolute;
+            border: 2px solid rgba(147, 197, 253, 0.4);
+            border-radius: 50%;
+            animation: radarPulse 3s infinite ease-out;
+        }
+        .radar-ring:nth-child(2) { animation-delay: 1s; }
+        .radar-ring:nth-child(3) { animation-delay: 2s; }
+
+        @keyframes radarPulse {
+            0% { width: 40px; height: 40px; opacity: 0.9; }
+            100% { width: 220px; height: 220px; opacity: 0; }
+        }
+
+        /* Floating Badges */
+        .floating-badge {
+            animation: floatItem 4s ease-in-out infinite;
+        }
+        .floating-badge:nth-child(even) {
+            animation-delay: 1.5s;
+        }
+        @keyframes floatItem {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* Smooth Form Transitions */
+        .form-transition {
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen font-sans">
+<body class="flex items-center justify-center min-h-screen font-sans p-4 overflow-x-hidden relative">
 
-    <div class="bg-white rounded-2xl shadow-xl flex w-3/4 max-w-4xl overflow-hidden" style="min-height: 500px;">
+    <!-- Interactive Particle Network Canvas -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Decorative Ambient Glow Blobs -->
+    <div class="ambient-blob w-96 h-96 bg-blue-500 top-[-10%] left-[-5%]"></div>
+    <div class="ambient-blob w-96 h-96 bg-indigo-600 bottom-[-10%] right-[-5%]"></div>
+
+    <!-- Custom Toast Notification Container -->
+    <div id="toast-container" class="fixed top-6 right-6 z-50 space-y-3 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Main Card Container -->
+    <div class="relative z-10 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 flex flex-col md:flex-row w-full max-w-4xl overflow-hidden" style="min-height: 580px;">
         
-        <div class="w-1/2 bg-blue-600 flex flex-col items-center justify-center p-12 text-white">
-            <h1 class="text-4xl font-bold mb-4 text-center">Campus Lost & Found System</h1>
-            <p class="text-center text-blue-100 mb-8">
-                The smart way to report, search, and recover lost property using AI-driven matching and geolocation.
-            </p>
-            <svg class="w-24 h-24 text-blue-200 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        </div>
-
-        <div class="w-1/2 p-12 flex flex-col justify-center">
+        <!-- LEFT SIDE: Interactive Visual Showcase -->
+        <div class="md:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 flex flex-col items-center justify-between p-10 text-white relative overflow-hidden">
             
-            <div id="login-form">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h2>
-                <p class="text-gray-500 mb-8">Please enter your institutional credentials to login.</p>
-                
-                <form onsubmit="event.preventDefault();">
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Institutional Email</label>
-                        <input class="w-full px-4 py-3 rounded-lg bg-gray-100 border border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none" type="email" placeholder="student@university.edu">
+            <!-- Subtle Grid Overlay -->
+            <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+            <!-- Top University Badge -->
+            <div class="relative z-10 flex items-center space-x-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20 text-xs font-semibold tracking-wide uppercase">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>INTI Smart Campus Portal</span>
+            </div>
+
+            <!-- Center Radar & Icon Graphic -->
+            <div class="relative z-10 my-6 flex flex-col items-center">
+                <div class="relative flex items-center justify-center w-36 h-36 mb-4">
+                    <div class="radar-ring"></div>
+                    <div class="radar-ring"></div>
+                    <div class="radar-ring"></div>
+                    <div class="w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-lg transform hover:scale-110 transition duration-300 cursor-pointer">
+                        <i class="fas fa-satellite-dish text-4xl text-blue-200"></i>
                     </div>
-                    
-                    <div class="mb-6">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-                        <input class="w-full px-4 py-3 rounded-lg bg-gray-100 border border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none" type="password" placeholder="••••••••">
-                        <div class="flex justify-end mt-2">
-                            <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-semibold">Forgot Password?</a>
-                        </div>
-                    </div>
-                    
-                    <button class="w-full block bg-blue-600 hover:bg-blue-700 focus:bg-blue-700 text-white font-bold rounded-lg px-4 py-3 transition duration-300">
-                        Log In
-                    </button>
-                </form>
-                
-                <p class="mt-8 text-center text-gray-500">
-                    New student? <a href="#" onclick="toggleForm('register')" class="text-blue-600 hover:text-blue-800 font-semibold">Create an account</a>
+                </div>
+
+                <h1 class="text-3xl md:text-4xl font-extrabold mb-3 text-center tracking-tight">
+                    Campus Lost &amp; Found
+                </h1>
+                <p class="text-center text-blue-100 text-sm leading-relaxed max-w-xs">
+                    The smart way to report, search, and recover lost property using AI-driven matching and live geolocation.
                 </p>
             </div>
 
-            <div id="register-form" class="hidden">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
-                <p class="text-gray-500 mb-8">Register to access the Lost & Found portal.</p>
-                
-                <form onsubmit="event.preventDefault();">
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Full Name</label>
-                        <input class="w-full px-4 py-3 rounded-lg bg-gray-100 border border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none" type="text" placeholder="John Doe">
-                    </div>
+            <!-- Interactive Floating Feature Pills -->
+            <div class="relative z-10 grid grid-cols-3 gap-2 w-full pt-4 border-t border-white/15 text-center">
+                <div class="floating-badge bg-white/10 hover:bg-white/20 backdrop-blur-sm p-2.5 rounded-xl border border-white/10 transition cursor-default">
+                    <i class="fas fa-brain text-blue-300 text-lg mb-1"></i>
+                    <p class="text-[11px] font-semibold text-blue-50">AI Matching</p>
+                </div>
+                <div class="floating-badge bg-white/10 hover:bg-white/20 backdrop-blur-sm p-2.5 rounded-xl border border-white/10 transition cursor-default">
+                    <i class="fas fa-map-marked-alt text-emerald-300 text-lg mb-1"></i>
+                    <p class="text-[11px] font-semibold text-blue-50">GPS Pinning</p>
+                </div>
+                <div class="floating-badge bg-white/10 hover:bg-white/20 backdrop-blur-sm p-2.5 rounded-xl border border-white/10 transition cursor-default">
+                    <i class="fas fa-cube text-amber-300 text-lg mb-1"></i>
+                    <p class="text-[11px] font-semibold text-blue-50">360° Viewer</p>
+                </div>
+            </div>
+        </div>
 
+        <!-- RIGHT SIDE: Auth Forms -->
+        <div class="md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white relative">
+            
+            <!-- Mode Switcher Pill -->
+            <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
+                <button type="button" id="tab-login-btn" onclick="toggleForm('login')" class="w-1/2 py-2 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm transition">
+                    <i class="fas fa-sign-in-alt mr-1.5"></i> Log In
+                </button>
+                <button type="button" id="tab-register-btn" onclick="toggleForm('register')" class="w-1/2 py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-gray-800 transition">
+                    <i class="fas fa-user-plus mr-1.5"></i> Register
+                </button>
+            </div>
+
+            <!-- ==================== LOGIN SECTION ==================== -->
+            <div id="login-form" class="form-transition">
+                <h2 class="text-2xl font-bold text-gray-800 mb-1">Welcome Back 👋</h2>
+                <p class="text-gray-500 text-sm mb-6">Enter your institutional credentials to access the portal.</p>
+                
+                <form onsubmit="handleLogin(event)">
                     <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Institutional Email</label>
-                        <input class="w-full px-4 py-3 rounded-lg bg-gray-100 border border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none" type="email" placeholder="student@university.edu">
+                        <label class="block text-gray-700 text-xs font-bold uppercase tracking-wider mb-2">Institutional Email</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <input id="login-email" oninput="validateEmailInput(this, 'login-email-badge')" class="w-full pl-10 pr-10 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:outline-none text-sm transition" type="email" placeholder="student@student.newinti.edu.my" required>
+                            <span id="login-email-badge" class="absolute inset-y-0 right-0 flex items-center pr-3.5 hidden">
+                                <i class="fas fa-check-circle text-emerald-500"></i>
+                            </span>
+                        </div>
                     </div>
                     
                     <div class="mb-6">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-                        <input class="w-full px-4 py-3 rounded-lg bg-gray-100 border border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none" type="password" placeholder="••••••••">
+                        <label class="block text-gray-700 text-xs font-bold uppercase tracking-wider mb-2">Password</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input id="login-password" class="w-full pl-10 pr-10 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:outline-none text-sm transition" type="password" placeholder="••••••••" required>
+                            <button type="button" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-blue-600 focus:outline-none">
+                                <i id="login-eye-icon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="text-xs text-gray-400"><i class="fas fa-shield-alt text-blue-500 mr-1"></i>Firebase Secured</span>
+                            <a href="#" onclick="handleForgotPassword(event)" class="text-xs text-blue-600 hover:text-blue-800 font-semibold hover:underline">Forgot Password?</a>
+                        </div>
                     </div>
                     
-                    <button class="w-full block bg-blue-600 hover:bg-blue-700 focus:bg-blue-700 text-white font-bold rounded-lg px-4 py-3 transition duration-300">
-                        Register
+                    <button id="login-submit-btn" type="submit" class="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold rounded-xl px-4 py-3.5 shadow-lg shadow-blue-600/25 transition duration-200">
+                        <span>Log In to Portal</span>
+                        <i class="fas fa-arrow-right ml-2 text-sm"></i>
                     </button>
                 </form>
                 
-                <p class="mt-6 text-center text-gray-500">
-                    Already have an account? <a href="#" onclick="toggleForm('login')" class="text-blue-600 hover:text-blue-800 font-semibold">Log in here</a>
+                <p class="mt-6 text-center text-sm text-gray-500">
+                    New student? <a href="#" onclick="toggleForm('register')" class="text-blue-600 hover:text-blue-800 font-bold">Create an account</a>
+                </p>
+            </div>
+
+            <!-- ==================== REGISTER SECTION ==================== -->
+            <div id="register-form" class="hidden form-transition">
+                <h2 class="text-2xl font-bold text-gray-800 mb-1">Create Account 🚀</h2>
+                <p class="text-gray-500 text-sm mb-5">Register with your official INTI student email.</p>
+                
+                <form onsubmit="handleRegister(event)">
+                    <div class="mb-3.5">
+                        <label class="block text-gray-700 text-xs font-bold uppercase tracking-wider mb-1.5">Full Name</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input id="reg-name" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:outline-none text-sm transition" type="text" placeholder="John Doe" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3.5">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-gray-700 text-xs font-bold uppercase tracking-wider">Institutional Email</label>
+                            <span id="domain-hint" class="text-[11px] font-medium text-gray-400">Must end with @student.newinti.edu.my</span>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                                <i class="fas fa-id-card"></i>
+                            </span>
+                            <input id="reg-email" oninput="validateEmailInput(this, 'reg-email-badge')" class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:outline-none text-sm transition" type="email" placeholder="student@student.newinti.edu.my" required>
+                            <span id="reg-email-badge" class="absolute inset-y-0 right-0 flex items-center pr-3.5 hidden">
+                                <i class="fas fa-check-circle text-emerald-500"></i>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-xs font-bold uppercase tracking-wider mb-1.5">Password</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                                <i class="fas fa-key"></i>
+                            </span>
+                            <input id="reg-password" oninput="checkPasswordStrength(this.value)" class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:outline-none text-sm transition" type="password" placeholder="••••••••" required>
+                            <button type="button" onclick="togglePasswordVisibility('reg-password', 'reg-eye-icon')" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-blue-600 focus:outline-none">
+                                <i id="reg-eye-icon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
+
+                        <!-- Live Interactive Password Strength Meter & Checklist -->
+                        <div class="mt-2.5 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <span class="text-[11px] font-semibold text-gray-500">Password Security Strength</span>
+                                <span id="strength-label" class="text-[11px] font-bold text-gray-400">None</span>
+                            </div>
+                            <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden mb-2.5">
+                                <div id="strength-bar" class="h-full bg-gray-400 transition-all duration-300" style="width: 0%;"></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-1.5 text-[11px] text-gray-500">
+                                <div id="req-len" class="flex items-center"><i class="fas fa-circle text-[6px] mr-1.5 text-gray-300"></i> 8+ Characters</div>
+                                <div id="req-upper" class="flex items-center"><i class="fas fa-circle text-[6px] mr-1.5 text-gray-300"></i> 1 Uppercase (A-Z)</div>
+                                <div id="req-num" class="flex items-center"><i class="fas fa-circle text-[6px] mr-1.5 text-gray-300"></i> 1 Number (0-9)</div>
+                                <div id="req-sym" class="flex items-center"><i class="fas fa-circle text-[6px] mr-1.5 text-gray-300"></i> 1 Special (!@#$)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="reg-submit-btn" type="submit" class="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold rounded-xl px-4 py-3 shadow-lg shadow-blue-600/25 transition duration-200">
+                        <span>Create Student Account</span>
+                        <i class="fas fa-user-check ml-2 text-sm"></i>
+                    </button>
+                </form>
+                
+                <p class="mt-4 text-center text-sm text-gray-500">
+                    Already have an account? <a href="#" onclick="toggleForm('login')" class="text-blue-600 hover:text-blue-800 font-bold">Log in here</a>
                 </p>
             </div>
 
         </div>
     </div>
+
+    <!-- Interactive UI & Particle Script -->
+    <script>
+        // 1. Toggle between Login and Register tabs with active pill styling
+        function toggleForm(formType) {
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const tabLoginBtn = document.getElementById('tab-login-btn');
+            const tabRegBtn = document.getElementById('tab-register-btn');
+
+            if (formType === 'register') {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                tabRegBtn.className = "w-1/2 py-2 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm transition";
+                tabLoginBtn.className = "w-1/2 py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-gray-800 transition";
+            } else {
+                registerForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                tabLoginBtn.className = "w-1/2 py-2 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm transition";
+                tabRegBtn.className = "w-1/2 py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-gray-800 transition";
+            }
+        }
+
+        // 2. Show / Hide Password Toggle
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.replace("fa-eye", "fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.replace("fa-eye-slash", "fa-eye");
+            }
+        }
+
+        // 3. Live Institutional Email Checkmark
+        function validateEmailInput(inputEl, badgeId) {
+            const badge = document.getElementById(badgeId);
+            const isValidDomain = inputEl.value.trim().toLowerCase().endsWith("@student.newinti.edu.my");
+            if (isValidDomain) {
+                badge.classList.remove("hidden");
+            } else {
+                badge.classList.add("hidden");
+            }
+        }
+
+        // 4. Real-Time Password Strength Checker
+        function checkPasswordStrength(password) {
+            const rules = {
+                len: password.length >= 8,
+                upper: /[A-Z]/.test(password),
+                num: /[0-9]/.test(password),
+                sym: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+            };
+
+            const updateItem = (id, passed, text) => {
+                const el = document.getElementById(id);
+                if (passed) {
+                    el.className = "flex items-center text-emerald-600 font-semibold";
+                    el.innerHTML = `<i class="fas fa-check-circle text-xs mr-1.5 text-emerald-500"></i> ${text}`;
+                } else {
+                    el.className = "flex items-center text-gray-500";
+                    el.innerHTML = `<i class="fas fa-circle text-[6px] mr-1.5 text-gray-300"></i> ${text}`;
+                }
+            };
+
+            updateItem('req-len', rules.len, '8+ Characters');
+            updateItem('req-upper', rules.upper, '1 Uppercase (A-Z)');
+            updateItem('req-num', rules.num, '1 Number (0-9)');
+            updateItem('req-sym', rules.sym, '1 Special (!@#$)');
+
+            const score = Object.values(rules).filter(Boolean).length;
+            const bar = document.getElementById('strength-bar');
+            const label = document.getElementById('strength-label');
+
+            const configs = [
+                { width: "0%", color: "bg-gray-300", text: "None", textColor: "text-gray-400" },
+                { width: "25%", color: "bg-red-500", text: "Weak", textColor: "text-red-500" },
+                { width: "50%", color: "bg-amber-500", text: "Fair", textColor: "text-amber-500" },
+                { width: "75%", color: "bg-blue-500", text: "Good", textColor: "text-blue-500" },
+                { width: "100%", color: "bg-emerald-500", text: "Strong ✓", textColor: "text-emerald-600" }
+            ];
+
+            bar.style.width = configs[score].width;
+            bar.className = `h-full transition-all duration-300 ${configs[score].color}`;
+            label.innerText = configs[score].text;
+            label.className = `text-[11px] font-bold ${configs[score].textColor}`;
+        }
+
+        // 5. Modern Toast Alert Helper (Also keeps standard alert compatibility)
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const colors = {
+                success: 'bg-emerald-600 border-emerald-400',
+                error: 'bg-red-600 border-red-400',
+                info: 'bg-blue-600 border-blue-400'
+            };
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center p-4 text-white rounded-2xl shadow-xl border ${colors[type]} transform transition-all duration-300 translate-x-0`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type]} text-lg mr-3"></i>
+                <div class="text-xs font-semibold flex-1">${message}</div>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        };
+
+        // 6. Interactive Particle Constellation Background
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouse = { x: null, y: null, radius: 130 };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2.2 + 1;
+                this.speedX = (Math.random() - 0.5) * 0.7;
+                this.speedY = (Math.random() - 0.5) * 0.7;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
+                if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
+
+                // Subtle interactive push/connection to mouse
+                if (mouse.x != null && mouse.y != null) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < mouse.radius) {
+                        this.x -= dx * 0.015;
+                        this.y -= dy * 0.015;
+                    }
+                }
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(147, 197, 253, 0.65)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const count = Math.min(75, Math.floor((canvas.width * canvas.height) / 14000));
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 120) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(147, 197, 253, ${0.22 - distance / 600})`;
+                        ctx.lineWidth = 1;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        initParticles();
+        animateParticles();
+    </script>
+
+    <!-- Firebase Authentication & SQLite Sync Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQdoln7-kt31PdjsVYy93UHWoIfWmxaMc",
+            authDomain: "campus-lost-found-e1cff.firebaseapp.com",
+            projectId: "campus-lost-found-e1cff",
+            storageBucket: "campus-lost-found-e1cff.firebasestorage.app",
+            messagingSenderId: "31986563694",
+            appId: "1:31986563694:web:a9f94142c86a437e93447f",
+            measurementId: "G-ZSCXGS57KV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // --- REGISTER HANDLER ---
+        window.handleRegister = async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const submitBtn = document.getElementById('reg-submit-btn');
+
+            // 1. Thesis Requirement: Enforce university-specific access
+            if (!email.endsWith("@student.newinti.edu.my")) {
+                showToast("Access Denied: Must use a valid @student.newinti.edu.my email.", "error");
+                alert("Access Denied: You must use a valid @student.newinti.edu.my email address to register.");
+                return;
+            }
+
+            // 2. Thesis Requirement: Enforce Password Security Policy
+            if (password.length < 8) {
+                alert("Security Error: Password must be at least 8 characters long.");
+                return;
+            }
+            if (!/[A-Z]/.test(password)) {
+                alert("Security Error: Password must contain at least one uppercase letter.");
+                return;
+            }
+            if (!/[0-9]/.test(password)) {
+                alert("Security Error: Password must contain at least one number.");
+                return;
+            }
+            if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+                alert("Security Error: Password must contain at least one special character.");
+                return;
+            }
+
+            const originalBtnHTML = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin mr-2"></i> Creating Account...`;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                
+                // Save user in SQLite
+                await fetch("http://127.0.0.1:8000/users/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email })
+                });
+
+                showToast("Account created! Please log in.", "success");
+                alert("Account created successfully! Please log in.");
+                toggleForm('login');
+            } catch (error) {
+                showToast(error.message, "error");
+                alert("Registration Error: " + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHTML;
+            }
+        };
+
+        // --- FORGOT PASSWORD LOGIC ---
+        window.handleForgotPassword = async function(event) {
+            event.preventDefault();
+            
+            let email = document.getElementById('login-email').value.trim();
+            if (!email) {
+                email = prompt("Please enter your institutional email address to reset your password:");
+            }
+            if (!email) return; 
+            
+            if (!email.endsWith("@student.newinti.edu.my")) {
+                showToast("Reset only allowed for @student.newinti.edu.my emails.", "error");
+                alert("Security Error: Password resets are only allowed for valid @student.newinti.edu.my accounts.");
+                return;
+            }
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                showToast("Password reset link sent to your inbox!", "success");
+                alert("✅ Password reset link sent! Please check your inbox (and spam folder) to securely change your password.");
+            } catch (error) {
+                showToast(error.message, "error");
+                alert("Error: " + error.message);
+            }
+        };
+
+        // --- LOGIN HANDLER ---
+        window.handleLogin = async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const submitBtn = document.getElementById('login-submit-btn');
+
+            const adminEmails = [
+                "admin@student.newinti.edu.my",
+                "security@student.newinti.edu.my"
+            ];
+
+            const originalBtnHTML = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin mr-2"></i> Verifying...`;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Check Temporary Day-Block Status (from Backend or LocalStorage)
+                const blocksMap = JSON.parse(localStorage.getItem("user_temp_blocks") || "{}");
+                let blockedUntil = blocksMap[user.email] || null;
+
+                try {
+                    const statusResponse = await fetch(`http://127.0.0.1:8000/users/${user.email}/status`);
+                    if (statusResponse.ok) {
+                        const statusData = await statusResponse.json();
+                        if (statusData.blocked_until) {
+                            blockedUntil = statusData.blocked_until;
+                        }
+                    }
+                } catch (e) {}
+
+                if (blockedUntil) {
+                    const expiryDate = new Date(blockedUntil);
+                    const now = new Date();
+                    if (expiryDate > now) {
+                        const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                        const msg = `Access Restricted: Your account is temporarily blocked by Campus Security for ${daysLeft} more day(s) (Until ${expiryDate.toLocaleDateString()}).`;
+                        showToast(msg, "error");
+                        alert(msg);
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnHTML;
+                        return; // Stop here, do not log them in while block is active
+                    } else {
+                        // Block expired -> remove it automatically
+                        delete blocksMap[user.email];
+                        localStorage.setItem("user_temp_blocks", JSON.stringify(blocksMap));
+                    }
+                }
+
+                // Ensure user exists in SQLite
+                await fetch("http://127.0.0.1:8000/users/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: user.email })
+                });
+
+                showToast("Login successful! Redirecting...", "success");
+                alert("Welcome back!");
+                
+                // Smart Routing
+                if (adminEmails.includes(user.email)) {
+                    window.location.href = "admin_dashboard.html"; 
+                } else {
+                    window.location.href = "index.html"; 
+                }
+                
+            } catch (error) {
+                showToast("Invalid email or password.", "error");
+                alert("Login Error: Invalid email or password.");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHTML;
+            }
+        };
+    </script>
 </body>
 </html>
