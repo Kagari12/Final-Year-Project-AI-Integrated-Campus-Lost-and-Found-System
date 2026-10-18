@@ -6,31 +6,50 @@
     <title>Admin Dashboard - Intelligent Campus Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF and AutoTable for PDF Pattern Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+        .modal-content { background-color: #222; margin: auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; text-align: center; position: relative; color: white; }
+        .close-btn { color: white; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover { color: #ff4444; }
+        #modal-image { width: 100%; max-width: 400px; height: 400px; object-fit: cover; border-radius: 8px; cursor: ew-resize; user-select: none; background: #333; margin-top: 15px; display: inline-block; }
+        
+        /* Active Sidebar Item Style */
+        .sidebar-active { background-color: #2563eb; color: white; }
+        .sidebar-inactive { color: #d1d5db; }
+        .sidebar-inactive:hover { background-color: #1f2937; }
+
+        /* Sortable Header Styling */
+        .sortable-header { cursor: pointer; user-select: none; transition: background-color 0.15s ease; }
+        .sortable-header:hover { background-color: #e5e7eb; color: #1f2937; }
+    </style>
 </head>
 <body class="bg-gray-100 flex h-screen overflow-hidden font-sans">
 
     <aside class="w-64 bg-gray-900 text-white flex flex-col">
         <div class="p-6 border-b border-gray-800">
             <h2 class="text-2xl font-bold text-blue-400">Campus Admin</h2>
-            <p class="text-xs text-gray-400 mt-1">Security Level: Maximum</p>
         </div>
         <nav class="flex-1 p-4 space-y-2">
-            <a href="#" class="flex items-center p-3 bg-blue-600 text-white rounded-lg">
-                <i class="fas fa-chart-line w-6"></i> Dashboard & Analytics
-            </a>
-            <a href="#" class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg transition">
+            <button id="nav-dashboard" onclick="switchTab('dashboard')" class="w-full flex items-center p-3 rounded-lg sidebar-active transition">
+                <i class="fas fa-chart-line w-6"></i> Dashboard &amp; Analytics
+            </button>
+            <button id="nav-users" onclick="switchTab('users')" class="w-full flex items-center p-3 rounded-lg sidebar-inactive transition">
                 <i class="fas fa-users w-6"></i> Manage User Accounts
-            </a>
-            <a href="#" class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg transition">
+            </button>
+            <button id="nav-claims" onclick="filterPendingClaims()" class="w-full flex items-center p-3 rounded-lg sidebar-inactive transition">
                 <i class="fas fa-box-open w-6"></i> Review Pending Claims
-            </a>
-            <a href="#" class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg transition">
+            </button>
+            <button class="w-full flex items-center p-3 rounded-lg sidebar-inactive transition opacity-50 cursor-not-allowed" title="Under Construction">
                 <i class="fas fa-cog w-6"></i> System Settings
-            </a>
+            </button>
         </nav>
         <div class="p-4 border-t border-gray-800">
-            <button class="w-full flex items-center justify-center p-2 bg-red-600 hover:bg-red-700 rounded text-white transition">
+            <button onclick="handleLogout()" class="w-full flex items-center justify-center p-2 bg-red-600 hover:bg-red-700 rounded text-white transition">
                 <i class="fas fa-sign-out-alt mr-2"></i> Log Out
             </button>
         </div>
@@ -38,152 +57,1166 @@
 
     <main class="flex-1 flex flex-col h-screen overflow-y-auto">
         <header class="bg-white shadow-sm p-6 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">System Overview & Analytics</h1>
+            <h1 id="page-title" class="text-2xl font-bold text-gray-800">System Overview &amp; Analytics</h1>
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
                     AD
                 </div>
-                <span class="font-medium text-gray-700">Administrator</span>
+                <span id="admin-email-display" class="font-medium text-gray-700">Loading...</span>
             </div>
         </header>
 
         <div class="p-6 space-y-6">
-            <div class="grid grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-gray-500 text-sm font-semibold uppercase">Total Items Recovered</h3>
-                    <p class="text-3xl font-bold text-gray-800 mt-2">142</p>
-                    <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up"></i> 12% from last month</p>
+            
+            <!-- ==================== SECTION: DASHBOARD ==================== -->
+            <div id="section-dashboard" style="display: block;">
+                <!-- DYNAMIC STATISTICS BOXES (Now includes Resolved Cases Card) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-gray-500 text-xs font-semibold uppercase">Total Database Records</h3>
+                        <p id="stat-total" class="text-3xl font-bold text-gray-800 mt-2">0</p>
+                        <p class="text-blue-500 text-xs mt-2"><i class="fas fa-database"></i> Active + Resolved</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-gray-500 text-xs font-semibold uppercase">Found Items Secured</h3>
+                        <p id="stat-found" class="text-3xl font-bold text-gray-800 mt-2">0</p>
+                        <p class="text-green-500 text-xs mt-2"><i class="fas fa-shield-alt"></i> Awaiting owners</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-gray-500 text-xs font-semibold uppercase">Lost Items Searching</h3>
+                        <p id="stat-lost" class="text-3xl font-bold text-gray-800 mt-2">0</p>
+                        <p class="text-orange-500 text-xs mt-2"><i class="fas fa-search"></i> AI actively matching</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-emerald-100">
+                        <h3 class="text-emerald-600 text-xs font-semibold uppercase">Resolved Cases</h3>
+                        <p id="stat-resolved" class="text-3xl font-bold text-emerald-600 mt-2">0</p>
+                        <p class="text-emerald-500 text-xs mt-2"><i class="fas fa-check-double"></i> Saved for pattern analysis</p>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-gray-500 text-sm font-semibold uppercase">AI Classification Accuracy</h3>
-                    <p class="text-3xl font-bold text-gray-800 mt-2">94.8%</p>
-                    <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up"></i> Model v2.1 Active</p>
+
+                <div id="chart-container" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Monthly Campus Reporting &amp; Resolution Patterns</h3>
+                    <div class="h-64">
+                        <canvas id="recoveryChart"></canvas>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-gray-500 text-sm font-semibold uppercase">Active Claims Pending</h3>
-                    <p class="text-3xl font-bold text-gray-800 mt-2">18</p>
-                    <p class="text-orange-500 text-sm mt-2"><i class="fas fa-exclamation-circle"></i> Requires Verification</p>
+
+                <!-- ITEMS TABLE -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <!-- Table Header & Export Buttons -->
+                    <div class="p-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                            <h3 id="table-title" class="text-lg font-bold text-gray-800">Live Item &amp; Resolved Case Database</h3>
+                            <p id="filter-count-label" class="text-xs text-gray-500 mt-0.5">Showing all records (including resolved cases for pattern tracking)</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="exportToCSV()" class="text-sm bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 px-3 rounded-lg transition shadow-sm flex items-center">
+                                <i class="fas fa-file-csv mr-1.5"></i> Export CSV
+                            </button>
+                            <button onclick="exportToPDF()" class="text-sm bg-red-600 hover:bg-red-700 text-white py-1.5 px-3 rounded-lg transition shadow-sm flex items-center">
+                                <i class="fas fa-file-pdf mr-1.5"></i> Export PDF
+                            </button>
+                            <button onclick="resetFilters()" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 px-3 rounded-lg transition flex items-center">
+                                <i class="fas fa-undo mr-1.5"></i> Reset Filters
+                            </button>
+                            <button onclick="loadDashboard()" class="text-sm bg-blue-50 hover:bg-blue-100 text-blue-600 py-1.5 px-3 rounded-lg transition font-medium flex items-center">
+                                <i class="fas fa-sync-alt mr-1.5"></i> Refresh Data
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- FILTER & SORT CONTROLS BAR -->
+                    <div class="p-4 bg-gray-50 border-b border-gray-100 grid grid-cols-1 md:grid-cols-6 gap-3">
+                        <!-- Filter by Status -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Status</label>
+                            <select id="filter-status" onchange="applyFiltersAndSort()" class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-500">
+                                <option value="ALL">All Statuses</option>
+                                <option value="ACTIVE_ONLY">Active Only (Hide Resolved)</option>
+                                <option value="Lost">Lost (Active)</option>
+                                <option value="Found">Found (Active)</option>
+                                <option value="Claimed">Claimed (Pending Review)</option>
+                                <option value="Resolved">Resolved Cases</option>
+                            </select>
+                        </div>
+
+                        <!-- Filter by Category -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Category</label>
+                            <select id="filter-category" onchange="applyFiltersAndSort()" class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-500">
+                                <option value="ALL">All Categories</option>
+                            </select>
+                        </div>
+
+                        <!-- Filter by Location / GPS -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Location / GPS</label>
+                            <input type="text" id="filter-location" oninput="applyFiltersAndSort()" placeholder="e.g. Level 3 or LR305" class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-500">
+                        </div>
+
+                        <!-- Filter by Days Lost -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Days Lost</label>
+                            <select id="filter-days" onchange="applyFiltersAndSort()" class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-500">
+                                <option value="ALL">Any Duration</option>
+                                <option value="0-3">0 - 3 Days (Recent)</option>
+                                <option value="4-7">4 - 7 Days</option>
+                                <option value="8-30">8 - 30 Days</option>
+                                <option value="30+">Over 30 Days</option>
+                            </select>
+                        </div>
+
+                        <!-- Filter by Actions Available -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Case State / Action</label>
+                            <select id="filter-action" onchange="applyFiltersAndSort()" class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-500">
+                                <option value="ALL">All States</option>
+                                <option value="Review Claim">Needs Claim Review</option>
+                                <option value="Resolve">Ready to Resolve</option>
+                                <option value="Resolved">Resolved (Archived)</option>
+                            </select>
+                        </div>
+
+                        <!-- Quick Sort Dropdown -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Sort By</label>
+                            <select id="sort-select" onchange="handleSortDropdown()" class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-500">
+                                <option value="id-desc">ID (Newest First)</option>
+                                <option value="id-asc">ID (Oldest First)</option>
+                                <option value="status-asc">Status (A-Z)</option>
+                                <option value="status-desc">Status (Z-A)</option>
+                                <option value="category-asc">Category (A-Z)</option>
+                                <option value="category-desc">Category (Z-A)</option>
+                                <option value="location-asc">Location (A-Z)</option>
+                                <option value="location-desc">Location (Z-A)</option>
+                                <option value="days-desc">Days Lost (High to Low)</option>
+                                <option value="days-asc">Days Lost (Low to High)</option>
+                                <option value="action-asc">Action State</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 text-sm uppercase border-b border-gray-200">
+                                    <th onclick="toggleColumnSort('id')" class="p-4 font-semibold sortable-header">
+                                        ID <span id="sort-icon-id" class="ml-1 text-blue-600">▼</span>
+                                    </th>
+                                    <th onclick="toggleColumnSort('status')" class="p-4 font-semibold sortable-header">
+                                        Status <span id="sort-icon-status" class="ml-1 text-gray-400">↕</span>
+                                    </th>
+                                    <th onclick="toggleColumnSort('category')" class="p-4 font-semibold sortable-header">
+                                        Category <span id="sort-icon-category" class="ml-1 text-gray-400">↕</span>
+                                    </th>
+                                    <th onclick="toggleColumnSort('location')" class="p-4 font-semibold sortable-header">
+                                        Location / GPS <span id="sort-icon-location" class="ml-1 text-gray-400">↕</span>
+                                    </th>
+                                    <th onclick="toggleColumnSort('days')" class="p-4 font-semibold sortable-header">
+                                        Days Lost <span id="sort-icon-days" class="ml-1 text-gray-400">↕</span>
+                                    </th>
+                                    <th onclick="toggleColumnSort('action')" class="p-4 font-semibold sortable-header">
+                                        Actions <span id="sort-icon-action" class="ml-1 text-gray-400">↕</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="divide-y divide-gray-100 text-sm text-gray-700">
+                                <tr><td colspan="6" class="p-6 text-center text-gray-500">Loading database...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">Monthly Campus Recovery Rates</h3>
-                <div class="h-64">
-                    <canvas id="recoveryChart"></canvas>
+            <!-- ==================== SECTION: MANAGE USERS ==================== -->
+            <div id="section-users" style="display: none;">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">Registered Student Accounts</h3>
+                            <p class="text-xs text-gray-500">Temporarily block accounts for a specific number of days or unblock them early.</p>
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="user-search-input" oninput="filterUsersTable()" placeholder="Search by email..." class="pl-8 pr-4 py-1.5 border rounded-full text-sm focus:outline-none focus:border-blue-500">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 text-sm uppercase">
+                                    <th class="p-4 font-semibold">User Email</th>
+                                    <th class="p-4 font-semibold">Account Status / Block Expiry</th>
+                                    <th class="p-4 font-semibold">Role</th>
+                                    <th class="p-4 font-semibold">Temporary Block Controls</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="divide-y divide-gray-100 text-sm text-gray-700">
+                                <!-- Users will be injected here via JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-gray-800">Live Item Database</h3>
-                    <button onclick="loadDashboard()" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded transition">
-                        <i class="fas fa-sync-alt mr-1"></i> Refresh Data
-                    </button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 text-gray-500 text-sm uppercase">
-                                <th class="p-4 font-semibold">ID</th>
-                                <th class="p-4 font-semibold">Status</th>
-                                <th class="p-4 font-semibold">Item Title</th>
-                                <th class="p-4 font-semibold">Description</th>
-                                <th class="p-4 font-semibold">GPS Coordinates</th>
-                                <th class="p-4 font-semibold">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-body" class="divide-y divide-gray-100 text-sm text-gray-700">
-                            <tr><td colspan="6" class="p-6 text-center text-gray-500">Loading database...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </main>
 
-    <script>
-        // --- 1. RENDER THE STATISTICAL GRAPH ---
-        const ctx = document.getElementById('recoveryChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Items Successfully Returned',
-                    data: [12, 19, 25, 32, 28, 45],
-                    borderColor: '#2563eb', // Blue-600
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+    <!-- The 360° Viewer Modal -->
+    <div id="viewer-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeViewer()">&times;</span>
+            <h3 style="margin-top: 0; font-size: 20px; font-weight: bold;">🔍 Admin 360° Inspection</h3>
+            <p style="color: #aaa; font-size: 14px;">↔️ Click and drag the image left or right</p>
+            <img id="modal-image" draggable="false" src="">
+            <p id="modal-loading" style="display:none; color: yellow;">Loading images...</p>
+        </div>
+    </div>
 
-        // --- 2. FETCH DATA FROM YOUR PYTHON SERVER ---
+    <!-- Review Claim Modal (Supports Multiple Competing Claims + Save as Resolved) -->
+    <div id="review-modal" class="modal">
+        <div class="bg-white m-auto p-6 rounded-xl w-11/12 max-w-lg text-left relative text-gray-800 shadow-2xl">
+            <span class="absolute top-2 right-4 text-2xl text-gray-400 hover:text-red-500 cursor-pointer font-bold" onclick="closeReview()">&times;</span>
+            <h3 class="text-xl font-bold text-blue-600 mb-1">🔐 Review Ownership Claims</h3>
+            <p class="text-xs text-gray-500 mb-4">Compare student answers against the physical item. Approving marks the case as <b>Resolved</b> for pattern reporting.</p>
+            
+            <!-- Multi-Claimant Tabs -->
+            <div id="claimant-tabs-container" class="flex flex-wrap gap-1.5 mb-4 pb-3 border-b border-gray-100"></div>
+
+            <!-- Claimant Meta Info -->
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4 flex justify-between items-center text-xs">
+                <div>
+                    <span class="text-gray-500 font-semibold">Claimant:</span>
+                    <span id="rev-claimant-email" class="font-bold text-blue-700 ml-1">--</span>
+                </div>
+                <span id="rev-claim-time" class="text-gray-400 text-[11px]"></span>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="font-bold text-gray-700 text-xs uppercase">1. Brand / Color / Model:</label>
+                    <p id="rev-brand" class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1 text-sm font-medium text-gray-800"></p>
+                </div>
+                <div>
+                    <label class="font-bold text-gray-700 text-xs uppercase">2. Unique Marks / Identifiers:</label>
+                    <p id="rev-marks" class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1 text-sm font-medium text-gray-800"></p>
+                </div>
+                <div>
+                    <label class="font-bold text-gray-700 text-xs uppercase">3. Contents / Attachments:</label>
+                    <p id="rev-contents" class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1 text-sm font-medium text-gray-800"></p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mt-6">
+                <button id="reject-claim-btn" class="w-full bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 rounded-lg transition text-xs uppercase tracking-wider">
+                    <i class="fas fa-times-circle mr-1.5"></i> Reject This Claim
+                </button>
+                <button id="approve-claim-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition shadow-md text-xs uppercase tracking-wider">
+                    <i class="fas fa-check-circle mr-1.5"></i> Approve &amp; Save Resolved
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allItems = [];
+        let allUsersCache = [];
+        let currentlyDisplayedItems = [];
+        let showingPendingOnly = false;
+        let currentSortField = 'id';
+        let currentSortDirection = 'desc';
+
+        // Helper: Read local resolved cases map (persists resolved state even if backend lacks a status column)
+        function getResolvedCasesMap() {
+            return JSON.parse(localStorage.getItem("resolved_cases_map") || "{}");
+        }
+
+        function isItemResolved(item) {
+            const resolvedMap = getResolvedCasesMap();
+            return item.claim_status === "Resolved" || item.status === "Resolved" || Boolean(resolvedMap[item.id]);
+        }
+
+        function getItemResolvedInfo(item) {
+            const resolvedMap = getResolvedCasesMap();
+            return resolvedMap[item.id] || {
+                resolved_date: item.resolved_date || null,
+                resolved_by: item.resolved_by || "Campus Security"
+            };
+        }
+
+        // --- 1. TAB SWITCHING LOGIC ---
+        function switchTab(tab) {
+            document.getElementById('nav-dashboard').className = tab === 'dashboard' ? "w-full flex items-center p-3 rounded-lg sidebar-active transition" : "w-full flex items-center p-3 rounded-lg sidebar-inactive transition";
+            document.getElementById('nav-users').className = tab === 'users' ? "w-full flex items-center p-3 rounded-lg sidebar-active transition" : "w-full flex items-center p-3 rounded-lg sidebar-inactive transition";
+            document.getElementById('nav-claims').className = "w-full flex items-center p-3 rounded-lg sidebar-inactive transition";
+            
+            document.getElementById('section-dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
+            document.getElementById('section-users').style.display = tab === 'users' ? 'block' : 'none';
+            
+            if (tab === 'dashboard') {
+                showingPendingOnly = false;
+                document.getElementById('page-title').innerText = "System Overview & Analytics";
+                document.getElementById('table-title').innerText = "Live Item & Resolved Case Database";
+                document.getElementById('chart-container').style.display = 'block';
+                
+                if (document.getElementById('filter-status').value === 'Claimed') {
+                    document.getElementById('filter-status').value = 'ALL';
+                }
+                applyFiltersAndSort();
+            } else if (tab === 'users') {
+                document.getElementById('page-title').innerText = "User Account Management";
+                loadRealUsers();
+            }
+        }
+
+        // --- 2. PENDING CLAIMS FILTER LOGIC ---
+        function filterPendingClaims() {
+            switchTab('dashboard');
+            showingPendingOnly = true;
+            
+            document.getElementById('nav-dashboard').className = "w-full flex items-center p-3 rounded-lg sidebar-inactive transition";
+            document.getElementById('nav-claims').className = "w-full flex items-center p-3 rounded-lg sidebar-active transition";
+            
+            document.getElementById('page-title').innerText = "Review Pending Claims";
+            document.getElementById('table-title').innerText = "Items Awaiting Security Review";
+            document.getElementById('chart-container').style.display = 'none';
+            
+            document.getElementById('filter-status').value = 'Claimed';
+            applyFiltersAndSort();
+        }
+
+        // --- DYNAMIC REAL-TIME CHART LOGIC (Shows Reported vs Resolved Pattern) ---
+        function renderRealChart(items) {
+            let monthlyReported = new Array(12).fill(0);
+            let monthlyResolved = new Array(12).fill(0);
+            const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            items.forEach(item => {
+                if (item.report_date) {
+                    const monthIndex = new Date(item.report_date).getMonth();
+                    monthlyReported[monthIndex]++;
+                }
+                if (isItemResolved(item)) {
+                    const resInfo = getItemResolvedInfo(item);
+                    const resDate = resInfo.resolved_date ? new Date(resInfo.resolved_date) : (item.report_date ? new Date(item.report_date) : new Date());
+                    monthlyResolved[resDate.getMonth()]++;
+                }
+            });
+
+            const currentMonth = new Date().getMonth();
+            const displayLabels = monthLabels.slice(0, currentMonth + 1);
+            const displayReported = monthlyReported.slice(0, currentMonth + 1);
+            const displayResolved = monthlyResolved.slice(0, currentMonth + 1);
+
+            let existingChart = Chart.getChart("recoveryChart");
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
+            const ctx = document.getElementById('recoveryChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: displayLabels,
+                    datasets: [
+                        {
+                            label: 'Total Items Reported',
+                            data: displayReported,
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Resolved Cases (Recovered)',
+                            data: displayResolved,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function populateCategoryFilter(items) {
+            const categorySelect = document.getElementById('filter-category');
+            const currentSelection = categorySelect.value;
+            const uniqueCategories = [...new Set(items.map(i => i.title).filter(Boolean))].sort();
+
+            categorySelect.innerHTML = '<option value="ALL">All Categories</option>';
+            uniqueCategories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                categorySelect.appendChild(option);
+            });
+
+            if (uniqueCategories.includes(currentSelection)) {
+                categorySelect.value = currentSelection;
+            }
+        }
+
+        // Fetch Dashboard Data
         async function loadDashboard() {
             try {
                 const response = await fetch("http://127.0.0.1:8000/items/");
                 const items = await response.json();
-                const tbody = document.getElementById("table-body");
-                tbody.innerHTML = ""; 
+                
+                allItems = items;
 
-                if (items.length === 0) {
-                    tbody.innerHTML = "<tr><td colspan='6' class='p-6 text-center text-gray-500'>Database is empty. No items reported.</td></tr>";
-                    return;
-                }
+                const resolvedCount = items.filter(i => isItemResolved(i)).length;
+                const activeFoundCount = items.filter(i => i.item_type === 'Found' && !isItemResolved(i)).length;
+                const activeLostCount = items.filter(i => i.item_type === 'Lost' && !isItemResolved(i)).length;
 
-                items.forEach(item => {
-                    // Tailwind badges based on Lost or Found
-                    const badgeClass = item.item_type === "Lost" 
-                        ? "bg-red-100 text-red-800" 
-                        : "bg-green-100 text-green-800";
-                    
-                    const coords = (item.latitude && item.longitude) 
-                        ? `<i class="fas fa-map-marker-alt text-gray-400 mr-1"></i> ${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}` 
-                        : "<span class='text-gray-400'>No GPS data</span>";
-                    
-                    const row = `
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 font-medium text-gray-900">#${item.id}</td>
-                            <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">${item.item_type}</span></td>
-                            <td class="p-4 font-medium">${item.title}</td>
-                            <td class="p-4 text-gray-500">${item.description || "-"}</td>
-                            <td class="p-4">${coords}</td>
-                            <td class="p-4 flex space-x-2">
-                                <button onclick="window.open('360_viewer.html?id=${item.id}', '_blank')" class="bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded text-xs font-bold transition">
-                                    <i class="fas fa-cube mr-1"></i> 360
-                                </button>
-                                <button onclick="resolveItem(${item.id})" class="bg-green-100 text-green-600 hover:bg-green-200 px-3 py-1 rounded text-xs font-bold transition">
-                                    <i class="fas fa-check mr-1"></i> Resolve
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += row;
-                });
+                document.getElementById('stat-total').innerText = items.length;
+                document.getElementById('stat-found').innerText = activeFoundCount;
+                document.getElementById('stat-lost').innerText = activeLostCount;
+                document.getElementById('stat-resolved').innerText = resolvedCount;
+
+                populateCategoryFilter(allItems);
+                renderRealChart(allItems);
+                applyFiltersAndSort();
             } catch (error) {
                 document.getElementById("table-body").innerHTML = `<tr><td colspan="6" class="p-6 text-center text-red-500 font-bold"><i class="fas fa-exclamation-triangle mr-2"></i> Server offline! Please start Uvicorn.</td></tr>`;
             }
         }
 
-        async function resolveItem(itemId) {
-            if (confirm(`Are you sure you want to resolve and delete Item #${itemId}?`)) {
-                try {
-                    const response = await fetch(`http://127.0.0.1:8000/items/${itemId}`, { method: 'DELETE' });
-                    if (response.ok) {
-                        loadDashboard(); 
-                    } else {
-                        alert("Error resolving item.");
-                    }
-                } catch (error) {
-                    alert("Server error. Is Uvicorn running?");
+        // --- FILTERING & SORTING ENGINE ---
+        function getEffectiveStatus(item) {
+            if (isItemResolved(item)) return "Resolved";
+            if (item.claim_status === "Pending Review") return "Claimed";
+            return item.item_type || "Unknown";
+        }
+
+        function getEffectiveAction(item) {
+            if (isItemResolved(item)) return "Resolved";
+            if (item.claim_status === "Pending Review") return "Review Claim";
+            return "Resolve";
+        }
+
+        function getLocationString(item) {
+            const loc = item.specific_location || "No specific location";
+            const gps = (item.latitude && item.longitude) ? `${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}` : "No GPS data";
+            return `${loc} (${gps})`;
+        }
+
+        function applyFiltersAndSort() {
+            const statusFilter = document.getElementById('filter-status').value;
+            const categoryFilter = document.getElementById('filter-category').value;
+            const locationQuery = document.getElementById('filter-location').value.trim().toLowerCase();
+            const daysFilter = document.getElementById('filter-days').value;
+            const actionFilter = document.getElementById('filter-action').value;
+
+            let filtered = allItems.filter(item => {
+                const effectiveStatus = getEffectiveStatus(item);
+                const resolved = isItemResolved(item);
+
+                if (showingPendingOnly && effectiveStatus !== "Claimed") {
+                    return false;
                 }
+
+                // Status Filter
+                if (statusFilter !== "ALL") {
+                    if (statusFilter === "ACTIVE_ONLY" && resolved) return false;
+                    if (statusFilter === "Resolved" && !resolved) return false;
+                    if (statusFilter === "Claimed" && effectiveStatus !== "Claimed") return false;
+                    if (statusFilter === "Lost" && (item.item_type !== "Lost" || resolved)) return false;
+                    if (statusFilter === "Found" && (item.item_type !== "Found" || resolved)) return false;
+                }
+
+                // Category Filter
+                if (categoryFilter !== "ALL" && item.title !== categoryFilter) {
+                    return false;
+                }
+
+                // Location / GPS Filter
+                if (locationQuery !== "") {
+                    const locText = (item.specific_location || "").toLowerCase();
+                    const gpsText = (item.latitude && item.longitude) 
+                        ? `${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}` 
+                        : "no gps data";
+                    if (!locText.includes(locationQuery) && !gpsText.includes(locationQuery)) {
+                        return false;
+                    }
+                }
+
+                // Days Lost Filter
+                const days = Number(item.days_lost) || 0;
+                if (daysFilter !== "ALL") {
+                    if (daysFilter === "0-3" && (days < 0 || days > 3)) return false;
+                    if (daysFilter === "4-7" && (days < 4 || days > 7)) return false;
+                    if (daysFilter === "8-30" && (days < 8 || days > 30)) return false;
+                    if (daysFilter === "30+" && days <= 30) return false;
+                }
+
+                // Actions Filter
+                const effectiveAction = getEffectiveAction(item);
+                if (actionFilter !== "ALL" && effectiveAction !== actionFilter) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            // Sort Items
+            filtered.sort((a, b) => {
+                let valA, valB;
+
+                switch (currentSortField) {
+                    case 'id':
+                        valA = Number(a.id) || 0;
+                        valB = Number(b.id) || 0;
+                        break;
+                    case 'status':
+                        valA = getEffectiveStatus(a).toLowerCase();
+                        valB = getEffectiveStatus(b).toLowerCase();
+                        break;
+                    case 'category':
+                        valA = (a.title || "").toLowerCase();
+                        valB = (b.title || "").toLowerCase();
+                        break;
+                    case 'location':
+                        valA = (a.specific_location || "").toLowerCase();
+                        valB = (b.specific_location || "").toLowerCase();
+                        break;
+                    case 'days':
+                        valA = Number(a.days_lost) || 0;
+                        valB = Number(b.days_lost) || 0;
+                        break;
+                    case 'action':
+                        valA = getEffectiveAction(a).toLowerCase();
+                        valB = getEffectiveAction(b).toLowerCase();
+                        break;
+                    default:
+                        valA = a.id;
+                        valB = b.id;
+                }
+
+                if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            currentlyDisplayedItems = filtered;
+            updateSortIcons();
+            document.getElementById('filter-count-label').innerText = `Showing ${filtered.length} of ${allItems.length} records (Active & Resolved preserved for pattern analysis)`;
+            renderTable(filtered);
+        }
+
+        function toggleColumnSort(field) {
+            if (currentSortField === field) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortField = field;
+                currentSortDirection = 'asc';
+            }
+
+            const dropdown = document.getElementById('sort-select');
+            const targetVal = `${currentSortField}-${currentSortDirection}`;
+            if ([...dropdown.options].some(opt => opt.value === targetVal)) {
+                dropdown.value = targetVal;
+            }
+
+            applyFiltersAndSort();
+        }
+
+        function handleSortDropdown() {
+            const val = document.getElementById('sort-select').value;
+            const [field, dir] = val.split('-');
+            currentSortField = field;
+            currentSortDirection = dir;
+            applyFiltersAndSort();
+        }
+
+        function updateSortIcons() {
+            const fields = ['id', 'status', 'category', 'location', 'days', 'action'];
+            fields.forEach(f => {
+                const iconEl = document.getElementById(`sort-icon-${f}`);
+                if (!iconEl) return;
+                if (f === currentSortField) {
+                    iconEl.innerText = currentSortDirection === 'asc' ? '▲' : '▼';
+                    iconEl.className = "ml-1 text-blue-600 font-bold";
+                } else {
+                    iconEl.innerText = '↕';
+                    iconEl.className = "ml-1 text-gray-400";
+                }
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-status').value = showingPendingOnly ? 'Claimed' : 'ALL';
+            document.getElementById('filter-category').value = 'ALL';
+            document.getElementById('filter-location').value = '';
+            document.getElementById('filter-days').value = 'ALL';
+            document.getElementById('filter-action').value = 'ALL';
+            document.getElementById('sort-select').value = 'id-desc';
+            currentSortField = 'id';
+            currentSortDirection = 'desc';
+            applyFiltersAndSort();
+        }
+
+        // --- EXPORT TO CSV & PDF (INCLUDES RESOLVED CASES & DATES FOR PATTERN ANALYSIS) ---
+        function exportToCSV() {
+            if (currentlyDisplayedItems.length === 0) {
+                alert("No items available to export.");
+                return;
+            }
+
+            const headers = [
+                "ID",
+                "Original Type",
+                "Current Case Status",
+                "Category",
+                "Specific Location / Floor",
+                "GPS Coordinates",
+                "Date Reported",
+                "Date Resolved",
+                "Days Lost"
+            ];
+
+            const rows = currentlyDisplayedItems.map(item => {
+                const dateReported = item.report_date ? new Date(item.report_date).toLocaleDateString() : "N/A";
+                const resolved = isItemResolved(item);
+                const resInfo = getItemResolvedInfo(item);
+                const dateResolved = resolved && resInfo.resolved_date
+                    ? new Date(resInfo.resolved_date).toLocaleDateString()
+                    : (resolved ? "Resolved" : "Still Active");
+                const status = getEffectiveStatus(item);
+                const category = item.title || "Uncategorized";
+                const location = item.specific_location || "No specific location";
+                const gps = (item.latitude && item.longitude) ? `${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}` : "No GPS data";
+                const daysLost = `${item.days_lost || 0} Days`;
+
+                return [
+                    `#${item.id}`,
+                    item.item_type || "N/A",
+                    status,
+                    category,
+                    location,
+                    gps,
+                    dateReported,
+                    dateResolved,
+                    daysLost
+                ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(",");
+            });
+
+            const csvContent = [headers.join(","), ...rows].join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `campus_pattern_report_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportToPDF() {
+            if (currentlyDisplayedItems.length === 0) {
+                alert("No items available to export.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: "landscape" });
+
+            const totalExported = currentlyDisplayedItems.length;
+            const resolvedCount = currentlyDisplayedItems.filter(i => isItemResolved(i)).length;
+            const recoveryRate = totalExported > 0 ? ((resolvedCount / totalExported) * 100).toFixed(1) : 0;
+
+            doc.setFontSize(16);
+            doc.setTextColor(37, 99, 235);
+            doc.text("Intelligent Campus Portal - Lost, Found & Resolved Pattern Report", 14, 15);
+
+            doc.setFontSize(10);
+            doc.setTextColor(80);
+            doc.text(
+                `Generated: ${new Date().toLocaleString()} | Records: ${totalExported} | Resolved Cases: ${resolvedCount} (${recoveryRate}% Resolution Rate)`,
+                14,
+                22
+            );
+
+            const tableColumn = ["ID", "Original Type", "Case Status", "Category", "Campus Location / GPS", "Reported Date", "Resolved Date", "Days Lost"];
+            const tableRows = currentlyDisplayedItems.map(item => {
+                const dateReported = item.report_date ? new Date(item.report_date).toLocaleDateString() : "N/A";
+                const resolved = isItemResolved(item);
+                const resInfo = getItemResolvedInfo(item);
+                const dateResolved = resolved && resInfo.resolved_date
+                    ? new Date(resInfo.resolved_date).toLocaleDateString()
+                    : (resolved ? "Resolved" : "-");
+
+                return [
+                    `#${item.id}`,
+                    item.item_type || "N/A",
+                    getEffectiveStatus(item),
+                    item.title || "Uncategorized",
+                    getLocationString(item),
+                    dateReported,
+                    dateResolved,
+                    `${item.days_lost || 0}d`
+                ];
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 28,
+                theme: 'grid',
+                styles: { fontSize: 8.5, cellPadding: 2.5 },
+                headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [249, 250, 251] }
+            });
+
+            doc.save(`campus_pattern_report_${new Date().toISOString().slice(0,10)}.pdf`);
+        }
+
+        // Reusable Table Renderer
+        function renderTable(itemsToRender) {
+            const tbody = document.getElementById("table-body");
+            tbody.innerHTML = ""; 
+
+            if (itemsToRender.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='6' class='p-6 text-center text-gray-500'>No items match your current filter criteria.</td></tr>";
+                return;
+            }
+
+            itemsToRender.forEach(item => {
+                const resolved = isItemResolved(item);
+                const resInfo = getItemResolvedInfo(item);
+                const badgeClass = item.item_type === "Lost" ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800";
+                const coords = (item.latitude && item.longitude) 
+                    ? `<i class="fas fa-map-marker-alt text-gray-400 mr-1"></i> ${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}` 
+                    : "<span class='text-gray-400'>No GPS data</span>";
+                
+                const dateObj = item.report_date ? new Date(item.report_date) : new Date();
+                const dateString = dateObj.toLocaleDateString();
+
+                let actionButtons = "";
+                let statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">${item.item_type}</span>`;
+                
+                if (resolved) {
+                    const resDateStr = resInfo.resolved_date ? new Date(resInfo.resolved_date).toLocaleDateString() : "Saved";
+                    statusBadge = `
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center">
+                            <i class="fas fa-check-double mr-1"></i> Resolved (${item.item_type})
+                        </span>
+                        <div class="text-[11px] text-emerald-600 mt-1 font-medium">Closed: ${resDateStr}</div>
+                    `;
+                    actionButtons = `
+                        <span class="px-2.5 py-1 rounded text-xs font-bold bg-gray-100 text-gray-500 inline-flex items-center">
+                            <i class="fas fa-archive mr-1"></i> Saved in History
+                        </span>
+                        <button onclick="reopenItem(${item.id})" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-2.5 py-1 rounded text-xs font-semibold transition" title="Reopen Case">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    `;
+                } else if (item.claim_status === "Pending Review") {
+                    statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800"><i class="fas fa-lock mr-1"></i> Claimed</span>`;
+                    actionButtons = `
+                        <button onclick="openReview(${item.id})" class="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-3 py-1 rounded text-xs font-bold transition shadow-sm border border-yellow-300">
+                            <i class="fas fa-shield-alt mr-1"></i> Review Claim
+                        </button>`;
+                } else {
+                    actionButtons = `
+                        <button onclick="resolveItem(${item.id})" class="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1 rounded text-xs font-bold transition">
+                            <i class="fas fa-check mr-1"></i> Mark Resolved
+                        </button>`;
+                }
+
+                const rowClass = resolved ? "bg-emerald-50/30 hover:bg-emerald-50/60 transition" : "hover:bg-gray-50 transition";
+
+                const row = `
+                    <tr class="${rowClass}">
+                        <td class="p-4 font-medium text-gray-900">#${item.id}<br><span class="text-xs text-gray-400">${dateString}</span></td>
+                        <td class="p-4">${statusBadge}</td>
+                        <td class="p-4 font-medium text-blue-600">${item.title}</td>
+                        <td class="p-4 text-sm"><b>${item.specific_location || "No specific location"}</b><br>${coords}</td>
+                        <td class="p-4 font-bold ${resolved ? 'text-gray-400' : 'text-red-500'}">${item.days_lost} Days</td>
+                        <td class="p-4 flex items-center space-x-2">
+                            <button onclick="openViewer(${item.id})" class="bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded text-xs font-bold transition">
+                                <i class="fas fa-cube mr-1"></i> 360
+                            </button>
+                            ${actionButtons}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // --- SAVE CASE AS RESOLVED (NO DELETION SO CSV & PDF KEEP PATTERNS) ---
+        async function resolveItem(itemId) {
+            if (confirm(`Mark Item #${itemId} as a Resolved Case? (It will be saved in the database for CSV/PDF pattern analysis)`)) {
+                const resolvedTimestamp = new Date().toISOString();
+
+                // 1. Save in local resolved map so UI & exports always retain the resolved record
+                const resolvedMap = getResolvedCasesMap();
+                resolvedMap[itemId] = {
+                    resolved_date: resolvedTimestamp,
+                    resolved_by: document.getElementById('admin-email-display').innerText || "Admin"
+                };
+                localStorage.setItem("resolved_cases_map", JSON.stringify(resolvedMap));
+
+                // 2. Also attempt to update backend status via PUT /items/{id}/resolve (if backend route exists)
+                try {
+                    await fetch(`http://127.0.0.1:8000/items/${itemId}/resolve`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            claim_status: "Resolved",
+                            resolved_date: resolvedTimestamp
+                        })
+                    });
+                } catch (e) {
+                    // Non-destructive fallback: local resolved_cases_map already keeps it saved
+                }
+
+                loadDashboard();
             }
         }
 
+        // Optional: Allow Admin to reopen a resolved case if marked by mistake
+        async function reopenItem(itemId) {
+            if (confirm(`Reopen Item #${itemId} back to Active status?`)) {
+                const resolvedMap = getResolvedCasesMap();
+                delete resolvedMap[itemId];
+                localStorage.setItem("resolved_cases_map", JSON.stringify(resolvedMap));
+                try {
+                    await fetch(`http://127.0.0.1:8000/items/${itemId}/reopen`, { method: 'PUT' });
+                } catch (e) {}
+                loadDashboard();
+            }
+        }
+
+        // --- 3. TEMPORARY DAY-BASED USER BLOCKING LOGIC (NO PERMANENT BAN) ---
+        function getUserBlocksMap() {
+            return JSON.parse(localStorage.getItem("user_temp_blocks") || "{}");
+        }
+
+        function getActiveBlockForUser(user) {
+            const blocksMap = getUserBlocksMap();
+            const localBlockUntil = blocksMap[user.email];
+            const rawUntil = user.blocked_until || localBlockUntil;
+
+            if (rawUntil) {
+                const untilDate = new Date(rawUntil);
+                const now = new Date();
+                if (untilDate > now) {
+                    const diffMs = untilDate - now;
+                    const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                    return {
+                        isBlocked: true,
+                        untilDate: untilDate,
+                        daysLeft: daysLeft
+                    };
+                } else {
+                    // Block expired automatically -> clean up
+                    if (localBlockUntil) {
+                        delete blocksMap[user.email];
+                        localStorage.setItem("user_temp_blocks", JSON.stringify(blocksMap));
+                    }
+                }
+            }
+            return { isBlocked: false, untilDate: null, daysLeft: 0 };
+        }
+
+        async function loadRealUsers() {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/users/");
+                allUsersCache = await response.json();
+                renderUsersTable(allUsersCache);
+            } catch (err) {
+                console.error("Error loading users", err);
+            }
+        }
+
+        function filterUsersTable() {
+            const q = (document.getElementById("user-search-input").value || "").trim().toLowerCase();
+            const filtered = allUsersCache.filter(u => u.email.toLowerCase().includes(q));
+            renderUsersTable(filtered);
+        }
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById("users-table-body");
+            tbody.innerHTML = "";
+
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400">No matching student accounts found.</td></tr>`;
+                return;
+            }
+
+            users.forEach((user) => {
+                const blockInfo = getActiveBlockForUser(user);
+
+                const statusBadge = blockInfo.isBlocked
+                    ? `<span class="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-xs font-bold inline-flex items-center">
+                        <i class="fas fa-clock mr-1.5"></i> Blocked (${blockInfo.daysLeft}d left • Until ${blockInfo.untilDate.toLocaleDateString()})
+                       </span>`
+                    : `<span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold inline-flex items-center">
+                        <i class="fas fa-check-circle mr-1.5"></i> Active
+                       </span>`;
+
+                const blockControls = blockInfo.isBlocked
+                    ? `<button onclick="unblockUser('${user.email}')" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                        <i class="fas fa-unlock mr-1"></i> Unblock Early
+                       </button>`
+                    : `<div class="flex items-center space-x-1.5">
+                        <select id="block-days-${user.email.replace(/[^a-zA-Z0-9]/g, '_')}" class="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:border-orange-500">
+                            <option value="1">1 Day</option>
+                            <option value="3" selected>3 Days</option>
+                            <option value="7">7 Days</option>
+                            <option value="14">14 Days</option>
+                            <option value="30">30 Days</option>
+                        </select>
+                        <button onclick="blockUserForDays('${user.email}')" class="bg-orange-100 text-orange-700 hover:bg-orange-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fas fa-hourglass-half mr-1"></i> Block User
+                        </button>
+                       </div>`;
+
+                const row = `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-medium text-gray-900">${user.email}</td>
+                        <td class="p-4">${statusBadge}</td>
+                        <td class="p-4 font-medium text-gray-600">${user.role || "Student"}</td>
+                        <td class="p-4 flex items-center space-x-2">
+                            ${blockControls}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        async function blockUserForDays(email) {
+            const safeId = `block-days-${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            const selectEl = document.getElementById(safeId);
+            const days = Number(selectEl ? selectEl.value : 3) || 3;
+
+            if (confirm(`Temporarily block ${email} for ${days} day(s)?`)) {
+                const untilDate = new Date();
+                untilDate.setDate(untilDate.getDate() + days);
+                const untilIso = untilDate.toISOString();
+
+                // Save in shared localStorage so login.html enforces the exact expiry date immediately
+                const blocksMap = getUserBlocksMap();
+                blocksMap[email] = untilIso;
+                localStorage.setItem("user_temp_blocks", JSON.stringify(blocksMap));
+
+                // Also notify FastAPI backend if endpoint exists
+                try {
+                    await fetch(`http://127.0.0.1:8000/users/${email}/block`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ days: days, blocked_until: untilIso })
+                    });
+                } catch (e) {}
+
+                loadRealUsers();
+            }
+        }
+
+        async function unblockUser(email) {
+            if (confirm(`Remove the temporary block for ${email} and restore Active access now?`)) {
+                const blocksMap = getUserBlocksMap();
+                delete blocksMap[email];
+                localStorage.setItem("user_temp_blocks", JSON.stringify(blocksMap));
+
+                try {
+                    await fetch(`http://127.0.0.1:8000/users/${email}/block`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ days: 0, blocked_until: null })
+                    });
+                } catch (e) {}
+
+                loadRealUsers();
+            }
+        }
+
+        // 360 Viewer Logic
+        let viewerImages = [];
+        let currentIndex = 0;
+        let isDragging = false;
+        let startX = 0;
+        const imgElement = document.getElementById("modal-image");
+        const modal = document.getElementById("viewer-modal");
+
+        async function openViewer(itemId) {
+            viewerImages = []; 
+            document.getElementById("modal-loading").style.display = "block";
+            document.getElementById("modal-loading").innerText = "Loading images...";
+            imgElement.src = ""; 
+            modal.style.display = "flex"; 
+            
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/items/${itemId}/images/`);
+                const data = await response.json();
+                
+                if (data.images && data.images.length > 0) {
+                    viewerImages = data.images.map(path => `http://127.0.0.1:8000${path}`);
+                    currentIndex = 0;
+                    imgElement.src = viewerImages[0];
+                    document.getElementById("modal-loading").style.display = "none";
+                } else {
+                    document.getElementById("modal-loading").innerText = "No photos were uploaded for this item.";
+                }
+            } catch (e) {
+                document.getElementById("modal-loading").innerText = "Error loading images.";
+            }
+        }
+
+        function closeViewer() {
+            modal.style.display = "none";
+            isDragging = false; 
+        }
+
+        imgElement.addEventListener('mousedown', (e) => { isDragging = true; startX = e.pageX; });
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging || viewerImages.length === 0) return;
+            let dragDistance = e.pageX - startX;
+            if (Math.abs(dragDistance) > 20) {
+                if (dragDistance > 0) { currentIndex = (currentIndex + 1) % viewerImages.length; } 
+                else { currentIndex = (currentIndex - 1 + viewerImages.length) % viewerImages.length; }
+                imgElement.src = viewerImages[currentIndex];
+                startX = e.pageX;
+            }
+        });
+
+        // Review Modal Logic (Multi-Claim Queue + Save as Resolved)
+        let activeReviewItemId = null;
+        let activeReviewClaimIndex = 0;
+
+        async function openReview(itemId, claimIdx = 0) {
+            activeReviewItemId = itemId;
+            activeReviewClaimIndex = claimIdx;
+
+            try {
+                const res = await fetch("http://127.0.0.1:8000/items/");
+                if (res.ok) allItems = await res.json();
+            } catch (e) {}
+
+            const item = allItems.find(i => Number(i.id) === Number(itemId)) || {};
+            const singleBackup = JSON.parse(localStorage.getItem(`claim_answers_${itemId}`) || "{}");
+            let claimsQueue = JSON.parse(localStorage.getItem(`claims_queue_${itemId}`) || "[]");
+
+            if (claimsQueue.length === 0) {
+                const b1 = item.verify_brand || item.field1 || singleBackup.verify_brand || singleBackup.field1;
+                const b2 = item.verify_marks || item.field2 || singleBackup.verify_marks || singleBackup.field2;
+                const b3 = item.verify_contents || item.field3 || singleBackup.verify_contents || singleBackup.field3;
+                if (b1 || b2 || b3) {
+                    claimsQueue = [{
+                        claim_id: 1,
+                        claimant_email: item.claimed_by || singleBackup.claimed_by || "Student Claimant",
+                        submitted_at: "Submitted via Portal",
+                        field1: b1,
+                        field2: b2,
+                        field3: b3
+                    }];
+                }
+            }
+
+            const tabsContainer = document.getElementById('claimant-tabs-container');
+            tabsContainer.innerHTML = "";
+
+            if (claimsQueue.length > 1) {
+                claimsQueue.forEach((c, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = idx === claimIdx
+                        ? "px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-sm"
+                        : "px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-200";
+                    btn.innerHTML = `<i class="fas fa-user-check mr-1"></i> Claim #${idx + 1} (${c.claimant_email.split('@')[0]})`;
+                    btn.onclick = () => openReview(itemId, idx);
+                    tabsContainer.appendChild(btn);
+                });
+            } else {
+                tabsContainer.innerHTML = `<span class="text-xs font-semibold text-gray-400">1 Ownership Claim Submitted</span>`;
+            }
+
+            const currentClaim = claimsQueue[claimIdx] || {};
+
+            document.getElementById('rev-claimant-email').innerText = currentClaim.claimant_email || "Student Claimant";
+            document.getElementById('rev-claim-time').innerText = currentClaim.submitted_at || "";
+            document.getElementById('rev-brand').innerText = currentClaim.field1 || "No answer provided";
+            document.getElementById('rev-marks').innerText = currentClaim.field2 || "No answer provided";
+            document.getElementById('rev-contents').innerText = currentClaim.field3 || "No answer provided";
+
+            // Approve Button -> Saves Item as Resolved Case (No Deletion)
+            document.getElementById('approve-claim-btn').onclick = function() {
+                closeReview();
+                resolveItem(itemId);
+            };
+
+            // Reject Button -> Removes only this false claim
+            document.getElementById('reject-claim-btn').onclick = async function() {
+                if (!confirm("Reject this ownership claim?")) return;
+                claimsQueue.splice(claimIdx, 1);
+                if (claimsQueue.length > 0) {
+                    localStorage.setItem(`claims_queue_${itemId}`, JSON.stringify(claimsQueue));
+                    openReview(itemId, 0);
+                } else {
+                    localStorage.removeItem(`claims_queue_${itemId}`);
+                    localStorage.removeItem(`claim_answers_${itemId}`);
+                    closeReview();
+                    loadDashboard();
+                }
+            };
+
+            document.getElementById('review-modal').style.display = "flex";
+        }
+
+        function closeReview() {
+            document.getElementById('review-modal').style.display = "none";
+        }
+
         loadDashboard();
+    </script>
+    
+    <!-- FIREBASE ADMIN SECURITY CHECK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQdoln7-kt31PdjsVYy93UHWoIfWmxaMc",
+            authDomain: "campus-lost-found-e1cff.firebaseapp.com",
+            projectId: "campus-lost-found-e1cff",
+            storageBucket: "campus-lost-found-e1cff.firebasestorage.app",
+            messagingSenderId: "31986563694",
+            appId: "1:31986563694:web:a9f94142c86a437e93447f",
+            measurementId: "G-ZSCXGS57KV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const adminEmails = ["admin@student.newinti.edu.my", "security@student.newinti.edu.my"];
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "login.html";
+            } else if (!adminEmails.includes(user.email)) {
+                alert("Security Alert: You do not have permission to view the Admin Dashboard.");
+                window.location.href = "index.html"; 
+            } else {
+                document.getElementById('admin-email-display').innerText = user.email;
+            }
+        });
+
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+                localStorage.removeItem("user_uid");
+                localStorage.removeItem("user_email");
+            } catch (error) {
+                alert("Error logging out: " + error.message);
+            }
+        };
     </script>
 </body>
 </html>
