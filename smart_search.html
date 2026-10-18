@@ -1,100 +1,881 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Smart Search - Campus Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 40px; display: flex; flex-direction: column; align-items: center; }
-        .search-container { width: 100%; max-width: 600px; text-align: center; }
-        h1 { color: #1a73e8; font-size: 36px; margin-bottom: 10px; }
-        p { color: #5f6368; margin-bottom: 30px; }
-        
-        .search-box { display: flex; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 25px; overflow: hidden; background: white; }
-        input { flex: 1; padding: 15px 25px; border: none; font-size: 18px; outline: none; }
-        button { background: #1a73e8; color: white; border: none; padding: 0 30px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
-        button:hover { background: #1557b0; }
+        .search-hero-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 50%, #1e3a8a 100%);
+            background-size: 200% 200%;
+            animation: gradientMove 12s ease infinite;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-        .results { width: 100%; max-width: 600px; margin-top: 30px; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid #ccc; display: flex; justify-content: space-between; align-items: center;}
-        .card.Lost { border-left-color: #dc3545; } /* Red for Lost */
-        .card.Found { border-left-color: #28a745; } /* Green for Found */
-        
-        .item-details h3 { margin: 0 0 5px 0; color: #333; }
-        .item-details p { margin: 0; font-size: 14px; color: #666; }
-        
-        .confidence-badge { background: #e8f0fe; color: #1a73e8; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; }
-        .confidence-high { background: #d4edda; color: #155724; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #modal-image {
+            width: 100%;
+            max-width: 400px;
+            height: 360px;
+            object-fit: cover;
+            border-radius: 12px;
+            cursor: ew-resize;
+            user-select: none;
+            background: #1e293b;
+            margin: 15px auto 0 auto;
+            display: block;
+        }
+
+        .result-card {
+            transition: all 0.25s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px -6px rgba(37, 99, 235, 0.12);
+        }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <div class="search-container">
-        <h1>Lost & Found System</h1>
-        <p>Describe your item. Our AI will find the closest matches across campus.</p>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-6 right-6 z-50 space-y-3 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- ==================== TOP NAVIGATION BAR ==================== -->
+    <nav class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <a href="index.html" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-600/30 group-hover:scale-105 transition">
+                    <i class="fas fa-satellite-dish text-lg"></i>
+                </div>
+                <div>
+                    <span class="text-lg font-extrabold tracking-tight text-gray-900">Campus<span class="text-blue-600">Portal</span></span>
+                    <span class="block text-[10px] font-semibold uppercase tracking-widest text-gray-400 -mt-1">Lost &amp; Found AI</span>
+                </div>
+            </a>
+
+            <div class="hidden md:flex items-center space-x-1">
+                <a href="index.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-home mr-1.5"></i> Home
+                </a>
+                <a href="report_item.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-bullhorn mr-1.5"></i> Report Item
+                </a>
+                <a href="smart_search.html" class="px-4 py-2 rounded-lg text-sm font-bold text-blue-600 bg-blue-50 transition">
+                    <i class="fas fa-brain mr-1.5"></i> Smart Search
+                </a>
+                <a href="campus_map.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-map-marked-alt mr-1.5"></i> Live Map
+                </a>
+                <a id="admin-nav-btn" href="admin_dashboard.html" class="hidden ml-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition">
+                    <i class="fas fa-shield-alt mr-1"></i> Admin Dashboard
+                </a>
+            </div>
+
+            <div id="user-profile-section" class="hidden items-center space-x-3 pl-4 border-l border-gray-200">
+                <div class="flex items-center space-x-2.5">
+                    <div id="user-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                        ST
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <p class="text-[11px] font-semibold text-emerald-600 flex items-center">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span> Verified Student
+                        </p>
+                        <p id="user-email-display" class="text-xs font-bold text-gray-700 truncate max-w-[160px]">Loading...</p>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 hover:border-red-600 text-xs font-bold px-3.5 py-2 rounded-xl transition duration-200 flex items-center shadow-sm">
+                    <i class="fas fa-sign-out-alt sm:mr-1.5"></i>
+                    <span class="hidden sm:inline">Logout</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ==================== SEARCH HERO BANNER ==================== -->
+    <section class="search-hero-bg text-white py-12 px-4 relative overflow-hidden">
+        <div class="max-w-3xl mx-auto text-center relative z-10">
+            <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md border border-white/20 px-3.5 py-1 rounded-full text-xs font-semibold text-blue-100 mb-4">
+                <i class="fas fa-sparkles text-amber-300"></i>
+                <span>Fuzzy-Logic Natural Language Matching Engine</span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">AI Smart Search</h1>
+            <p class="text-blue-100 text-sm sm:text-base mb-8 max-w-xl mx-auto">
+                Describe your item's color, brand, category, or where you lost it. Only active, unresolved campus items are shown.
+            </p>
+
+            <!-- Search Box -->
+            <div class="bg-white p-2 rounded-2xl shadow-2xl flex items-center max-w-2xl mx-auto border-4 border-white/20">
+                <div class="pl-4 pr-2 text-gray-400">
+                    <i class="fas fa-search text-lg"></i>
+                </div>
+                <input type="text" id="searchInput" onkeypress="handleEnter(event)" placeholder="e.g., blue water tumbler with a scratch near library..." class="w-full px-3 py-3 text-gray-800 placeholder-gray-400 text-base focus:outline-none">
+                <button onclick="clearSearch()" id="clearBtn" class="hidden text-gray-400 hover:text-gray-600 px-3 py-2" title="Clear search">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+                <button onclick="performSearch()" id="searchBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl transition flex items-center shrink-0 shadow-md">
+                    <span>Search</span>
+                    <i class="fas fa-bolt ml-2 text-amber-300"></i>
+                </button>
+            </div>
+
+            <!-- Quick Example Chips -->
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+                <span class="text-blue-200 font-medium">Try searching:</span>
+                <button onclick="quickFill('Laptop')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">💻 Laptop</button>
+                <button onclick="quickFill('Water Bottle')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">🍼 Water Bottle</button>
+                <button onclick="quickFill('Mobile Phone')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">📱 Mobile Phone</button>
+                <button onclick="quickFill('Keys')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">🔑 Keys</button>
+                <button onclick="loadAllItems()" class="bg-emerald-500/25 hover:bg-emerald-500/40 border border-emerald-300/40 px-3 py-1 rounded-full text-emerald-100 font-semibold transition">📋 Browse All Active Items</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FILTER & RESULTS AREA ==================== -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full">
         
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="e.g., blue water tumbler with a scratch" onkeypress="handleEnter(event)">
-            <button onclick="performSearch()">Search</button>
+        <!-- Selected Item Banner (Shown when redirected from Home Page Recent Campus Reports) -->
+        <div id="selected-item-banner" class="hidden bg-blue-600 text-white p-4 rounded-2xl shadow-md mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div>
+                    <h4 id="selected-banner-title" class="text-sm font-extrabold">Viewing Selected Campus Report</h4>
+                    <p class="text-xs text-blue-100">You can inspect its 360° photos or submit an ownership claim below.</p>
+                </div>
+            </div>
+            <button onclick="loadAllItems()" class="bg-white text-blue-700 hover:bg-blue-50 text-xs font-extrabold px-4 py-2 rounded-xl shadow-sm transition">
+                <i class="fas fa-list-ul mr-1.5"></i> Show All Active Items
+            </button>
+        </div>
+
+        <!-- Filter & Sort Bar -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-1 bg-gray-100 p-1 rounded-xl">
+                <button onclick="setTypeFilter('ALL')" id="filter-type-ALL" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-600 shadow-sm transition">
+                    All Active
+                </button>
+                <button onclick="setTypeFilter('Found')" id="filter-type-Found" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1"></span> Found Items
+                </button>
+                <button onclick="setTypeFilter('Lost')" id="filter-type-Lost" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition">
+                    <span class="w-2 h-2 rounded-full bg-red-500 inline-block mr-1"></span> Lost Items
+                </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4 text-xs">
+                <div class="flex items-center space-x-2">
+                    <label for="minConfidence" class="font-semibold text-gray-500">Min Match:</label>
+                    <input type="range" id="minConfidence" min="0" max="90" step="10" value="0" oninput="updateConfidenceFilter(this.value)" class="w-24 accent-blue-600 cursor-pointer">
+                    <span id="minConfidenceLabel" class="font-bold text-blue-600 w-8">0%</span>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                    <label for="sortResults" class="font-semibold text-gray-500">Sort:</label>
+                    <select id="sortResults" onchange="renderFilteredResults()" class="border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white font-semibold text-gray-700 focus:outline-none focus:border-blue-500">
+                        <option value="confidence-desc">Highest Match %</option>
+                        <option value="id-desc">Newest Reported</option>
+                        <option value="id-asc">Oldest Reported</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-4 px-1">
+            <p id="results-summary" class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Enter a description above or browse all active campus items
+            </p>
+        </div>
+
+        <!-- AI Results Container -->
+        <div id="resultsContainer" class="space-y-4">
+            <div class="bg-white rounded-2xl border border-gray-100 p-10 text-center shadow-sm">
+                <div class="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mx-auto mb-4">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-1">Ready to Scan Active Campus Database</h3>
+                <p class="text-sm text-gray-500 max-w-md mx-auto mb-5">
+                    Type a description in the search box above, or click below to view all currently active Lost &amp; Found items.
+                </p>
+                <button onclick="loadAllItems()" class="bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs px-4 py-2.5 rounded-xl transition">
+                    <i class="fas fa-list-ul mr-1.5"></i> Load All Active Items
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== 1. 360° PHOTO INSPECTION MODAL ==================== -->
+    <div id="viewer-modal" class="modal">
+        <div class="bg-slate-900 text-white p-6 rounded-2xl w-11/12 max-w-md text-center relative shadow-2xl border border-slate-700">
+            <button onclick="closeViewer()" class="absolute top-3 right-4 text-2xl text-gray-400 hover:text-red-400 font-bold">&times;</button>
+            <h3 class="text-lg font-bold text-blue-400 flex items-center justify-center">
+                <i class="fas fa-cube mr-2"></i> 360° Item Inspection
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">↔️ Click and drag left or right to rotate item</p>
+            
+            <img id="modal-image" draggable="false" src="" alt="Item 360 Preview">
+            <p id="modal-loading" class="text-amber-400 text-xs font-semibold mt-3 hidden">Loading photos...</p>
+            <p id="modal-frame-counter" class="text-[11px] text-slate-400 mt-2"></p>
         </div>
     </div>
 
-    <div class="results" id="resultsContainer">
-        <!-- AI Results will magically appear here -->
+    <!-- ==================== 2. DYNAMIC CATEGORY-SPECIFIC OWNERSHIP VERIFICATION MODAL ==================== -->
+    <div id="claim-modal" class="modal">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl w-11/12 max-w-lg text-left relative shadow-2xl border border-gray-100">
+            <span class="absolute top-4 right-5 text-2xl text-gray-400 hover:text-red-500 cursor-pointer font-bold" onclick="closeClaimModal()">&times;</span>
+            <h3 class="text-lg font-extrabold text-blue-600 border-b border-gray-100 pb-2.5">
+                🔐 Category-Specific Ownership Verification
+            </h3>
+            <p class="text-xs text-gray-500 mt-2 mb-4">
+                Claiming Item #<span id="claim-item-id-display" class="font-bold text-gray-800"></span>
+                (<span id="claim-item-cat-display" class="font-bold text-blue-600"></span>).
+                Please provide precise security details so Campus Security can verify your ownership:
+            </p>
+            
+            <div id="dynamic-questions-container" class="space-y-3 text-xs"></div>
+            
+            <button id="confirm-claim-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl mt-6 transition shadow-md text-xs uppercase tracking-wider" onclick="submitClaim()">
+                <i class="fas fa-shield-alt mr-1.5"></i> Submit Security Verification
+            </button>
+        </div>
     </div>
 
+    <!-- ==================== SEARCH, FILTER, 360 VIEWER & CLAIM LOGIC ==================== -->
     <script>
-        // Allow users to press "Enter" on their keyboard to search
+        let rawSearchResults = [];
+        let allDatabaseItemsMap = {};
+        let activeTypeFilter = 'ALL';
+        let minConfidenceValue = 0;
+
+        // Check if an item has been marked as Resolved by Admin
+        function isItemResolved(item) {
+            const resolvedMap = JSON.parse(localStorage.getItem("resolved_cases_map") || "{}");
+            return item.claim_status === "Resolved" || item.status === "Resolved" || Boolean(resolvedMap[item.id]);
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const styles = {
+                success: 'bg-emerald-600 border-emerald-400',
+                error: 'bg-red-600 border-red-400',
+                info: 'bg-blue-600 border-blue-400'
+            };
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center p-4 text-white rounded-2xl shadow-xl border ${styles[type]} transition-all duration-300`;
+            toast.innerHTML = `<i class="fas ${icons[type]} text-lg mr-3"></i><div class="text-xs font-semibold flex-1">${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        async function syncFullItemsMetadata() {
+            try {
+                const res = await fetch("http://127.0.0.1:8000/items/");
+                const items = await res.json();
+                allDatabaseItemsMap = {};
+                items.forEach(item => {
+                    allDatabaseItemsMap[item.id] = item;
+                });
+                return items;
+            } catch (e) {
+                console.warn("Could not pre-fetch full item list:", e);
+                return [];
+            }
+        }
+
         function handleEnter(event) {
             if (event.key === "Enter") {
                 performSearch();
             }
         }
 
-        async function performSearch() {
-            const query = document.getElementById("searchInput").value;
+        function quickFill(text) {
+            document.getElementById("selected-item-banner").classList.add("hidden");
+            document.getElementById("searchInput").value = text;
+            document.getElementById("clearBtn").classList.remove("hidden");
+            performSearch();
+        }
+
+        function clearSearch() {
+            document.getElementById("selected-item-banner").classList.add("hidden");
+            document.getElementById("searchInput").value = "";
+            document.getElementById("clearBtn").classList.add("hidden");
+            loadAllItems();
+        }
+
+        // Load a single specific item when clicked from index.html Recent Campus Reports
+        async function loadSpecificItemById(targetId) {
             const container = document.getElementById("resultsContainer");
-            
-            if (!query) {
-                alert("Please type something to search!");
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl p-10 text-center border border-gray-100 shadow-sm">
+                    <i class="fas fa-circle-notch fa-spin text-2xl text-blue-600 mb-2"></i>
+                    <p class="text-sm font-bold text-gray-700">Loading Item #${targetId} details...</p>
+                </div>
+            `;
+
+            const items = await syncFullItemsMetadata();
+            const foundItem = items.find(i => Number(i.id) === Number(targetId));
+
+            if (!foundItem || isItemResolved(foundItem)) {
+                document.getElementById("selected-item-banner").classList.add("hidden");
+                showToast(`Item #${targetId} has already been resolved or is unavailable.`, "info");
+                loadAllItems();
                 return;
             }
 
-            container.innerHTML = "<p style='text-align: center;'>Thinking... 🤔</p>";
+            // Show the Selected Item Banner
+            const banner = document.getElementById("selected-item-banner");
+            document.getElementById("selected-banner-title").innerText = `Viewing Selected Campus Report: #${foundItem.id} — ${foundItem.title || 'Item'}`;
+            banner.classList.remove("hidden");
+
+            activeTypeFilter = 'ALL';
+            minConfidenceValue = 0;
+            document.getElementById('minConfidence').value = 0;
+            document.getElementById('minConfidenceLabel').innerText = '0%';
+
+            rawSearchResults = [{
+                id: foundItem.id,
+                type: foundItem.item_type || "Found",
+                title: foundItem.title || "Item",
+                description: foundItem.description || "No description provided.",
+                confidence: 100,
+                specific_location: foundItem.specific_location || "Campus Location",
+                latitude: foundItem.latitude,
+                longitude: foundItem.longitude,
+                days_lost: foundItem.days_lost ?? 0,
+                claim_status: foundItem.claim_status || "Unclaimed",
+                report_date: foundItem.report_date,
+                is_selected_highlight: true
+            }];
+
+            renderFilteredResults();
+        }
+
+        // Perform AI Search against /search/?q= (Automatically filters out Resolved items)
+        async function performSearch() {
+            const queryInput = document.getElementById("searchInput");
+            const query = queryInput.value.trim();
+            const container = document.getElementById("resultsContainer");
+
+            if (!query) {
+                showToast("Please enter keywords to describe the item!", "error");
+                return;
+            }
+
+            document.getElementById("selected-item-banner").classList.add("hidden");
+            document.getElementById("clearBtn").classList.remove("hidden");
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl p-10 text-center border border-gray-100 shadow-sm">
+                    <i class="fas fa-circle-notch fa-spin text-3xl text-blue-600 mb-3"></i>
+                    <p class="font-bold text-gray-800">AI is scanning active campus records... 🤔</p>
+                    <p class="text-xs text-gray-400 mt-1">Calculating fuzzy-logic similarity scores for "${query}"</p>
+                </div>
+            `;
 
             try {
-                // Call your Python AI Endpoint
+                await syncFullItemsMetadata();
+
                 const response = await fetch(`http://127.0.0.1:8000/search/?q=${encodeURIComponent(query)}`);
                 const data = await response.json();
 
-                container.innerHTML = ""; // Clear the loading text
+                // Map and exclude any item marked as Resolved
+                rawSearchResults = (data.results || [])
+                    .map(resItem => {
+                        const extra = allDatabaseItemsMap[resItem.id] || {};
+                        return {
+                            id: resItem.id,
+                            type: resItem.type || extra.item_type || "Found",
+                            title: resItem.title || extra.title || "Item",
+                            description: resItem.description || extra.description || "No description provided.",
+                            confidence: resItem.confidence ?? 100,
+                            specific_location: extra.specific_location || "Campus Location",
+                            latitude: extra.latitude,
+                            longitude: extra.longitude,
+                            days_lost: extra.days_lost ?? 0,
+                            claim_status: extra.claim_status || "Unclaimed",
+                            status: extra.status,
+                            report_date: extra.report_date
+                        };
+                    })
+                    .filter(item => !isItemResolved(item));
 
-                if (data.results.length === 0) {
-                    container.innerHTML = "<p style='text-align: center;'>No matches found. Try different words!</p>";
-                    return;
-                }
-
-                // Loop through the results and build the HTML cards
-                data.results.forEach(item => {
-                    // Make the badge green if it's a really high match (>75%)
-                    const badgeClass = item.confidence >= 75 ? "confidence-high" : "";
-                    
-                    const card = `
-                        <div class="card ${item.type}">
-                            <div class="item-details">
-                                <h3>[${item.type}] ${item.title}</h3>
-                                <p>ID: ${item.id} | ${item.description || "No description provided."}</p>
-                            </div>
-                            <div class="confidence-badge ${badgeClass}">
-                                ${item.confidence}% Match
-                            </div>
-                        </div>
-                    `;
-                    container.innerHTML += card;
-                });
-
+                renderFilteredResults();
             } catch (error) {
-                container.innerHTML = `<p style="color: red; text-align: center;">Error connecting to the server. Is Uvicorn running?</p>`;
+                container.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-2xl p-8 text-center text-red-600">
+                        <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                        <p class="font-bold">Error connecting to the AI server.</p>
+                        <p class="text-xs text-red-500 mt-1">Please make sure your FastAPI Uvicorn server is running on http://127.0.0.1:8000</p>
+                    </div>
+                `;
             }
         }
+
+        // Browse All Active Unresolved Items
+        async function loadAllItems() {
+            document.getElementById("selected-item-banner").classList.add("hidden");
+            const container = document.getElementById("resultsContainer");
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl p-10 text-center border border-gray-100 shadow-sm">
+                    <i class="fas fa-circle-notch fa-spin text-2xl text-blue-600 mb-2"></i>
+                    <p class="text-sm font-bold text-gray-700">Loading all active campus items...</p>
+                </div>
+            `;
+
+            const items = await syncFullItemsMetadata();
+            const activeItems = (items || []).filter(item => !isItemResolved(item));
+
+            if (activeItems.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-8 text-center border border-gray-100 text-gray-500 text-sm">
+                        No active unresolved items in the database right now.
+                    </div>
+                `;
+                document.getElementById("results-summary").innerText = "Showing 0 active records";
+                return;
+            }
+
+            rawSearchResults = activeItems.map(item => ({
+                id: item.id,
+                type: item.item_type || "Found",
+                title: item.title || "Item",
+                description: item.description || "No description provided.",
+                confidence: 100,
+                specific_location: item.specific_location || "Campus Location",
+                latitude: item.latitude,
+                longitude: item.longitude,
+                days_lost: item.days_lost ?? 0,
+                claim_status: item.claim_status || "Unclaimed",
+                report_date: item.report_date
+            }));
+
+            renderFilteredResults();
+        }
+
+        function setTypeFilter(type) {
+            activeTypeFilter = type;
+            ['ALL', 'Found', 'Lost'].forEach(t => {
+                const btn = document.getElementById(`filter-type-${t}`);
+                if (t === type) {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-600 shadow-sm transition";
+                } else {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition";
+                }
+            });
+            renderFilteredResults();
+        }
+
+        function updateConfidenceFilter(val) {
+            minConfidenceValue = Number(val);
+            document.getElementById('minConfidenceLabel').innerText = `${val}%`;
+            renderFilteredResults();
+        }
+
+        function renderFilteredResults() {
+            const container = document.getElementById("resultsContainer");
+            const sortMode = document.getElementById("sortResults").value;
+
+            let filtered = rawSearchResults.filter(item => {
+                if (isItemResolved(item)) return false; // Never show Resolved items in active student search
+                if (activeTypeFilter !== 'ALL' && item.type !== activeTypeFilter) return false;
+                if (item.confidence < minConfidenceValue) return false;
+                return true;
+            });
+
+            filtered.sort((a, b) => {
+                if (sortMode === 'confidence-desc') return b.confidence - a.confidence;
+                if (sortMode === 'id-desc') return b.id - a.id;
+                if (sortMode === 'id-asc') return a.id - b.id;
+                return 0;
+            });
+
+            document.getElementById("results-summary").innerText = 
+                `Showing ${filtered.length} of ${rawSearchResults.length} active matching records`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl border border-gray-100 p-10 text-center shadow-sm">
+                        <i class="fas fa-search-minus text-3xl text-gray-300 mb-3"></i>
+                        <h3 class="text-base font-bold text-gray-800">No active matching items found</h3>
+                        <p class="text-xs text-gray-500 mt-1 mb-4">Try using broader keywords, lowering the minimum match slider, or reporting your lost item.</p>
+                        <a href="report_item.html" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition">
+                            <i class="fas fa-bullhorn mr-1.5"></i> Report a Lost Item
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => {
+                const isLost = item.type === "Lost";
+                const borderClass = isLost ? "border-l-red-500" : "border-l-emerald-500";
+                const highlightRing = item.is_selected_highlight ? "ring-2 ring-blue-500 bg-blue-50/20" : "bg-white";
+                const typeBadge = isLost
+                    ? `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Lost Report</span>`
+                    : `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Found &amp; Secured</span>`;
+
+                const isHighConfidence = item.confidence >= 75;
+                const confidenceBadgeClass = isHighConfidence
+                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                    : "bg-blue-50 text-blue-700 border-blue-200";
+
+                const dateStr = item.report_date ? new Date(item.report_date).toLocaleDateString() : "Recent";
+                const gpsCoords = (item.latitude && item.longitude)
+                    ? `${Number(item.latitude).toFixed(4)}, ${Number(item.longitude).toFixed(4)}`
+                    : null;
+
+                let claimActionHTML = "";
+                if (item.type === "Found") {
+                    const statusBadge = item.claim_status === "Pending Review"
+                        ? `<span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 inline-flex items-center">
+                            <i class="fas fa-clock mr-1"></i> Has Pending Claim
+                           </span>`
+                        : "";
+                    claimActionHTML = `
+                        ${statusBadge}
+                        <button onclick="openClaimModal(${item.id}, '${(item.title || '').replace(/'/g, "\\'")}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-sm inline-flex items-center">
+                            <i class="fas fa-hand-holding-heart mr-1.5"></i> Claim Item
+                        </button>
+                    `;
+                } else {
+                    claimActionHTML = `
+                        <a href="report_item.html" class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center">
+                            <i class="fas fa-hands-helping mr-1.5"></i> I Found This
+                        </a>
+                    `;
+                }
+
+                return `
+                    <div class="result-card ${highlightRing} p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 ${borderClass} flex flex-col sm:flex-row justify-between gap-4">
+                        <div class="space-y-2 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                ${typeBadge}
+                                <span class="text-xs font-bold text-gray-400">#${item.id}</span>
+                                <span class="text-xs text-gray-400">• Reported ${dateStr}</span>
+                                ${item.days_lost > 0 ? `<span class="text-xs font-semibold text-orange-500">• ${item.days_lost}d ago</span>` : ''}
+                            </div>
+
+                            <h3 class="text-lg font-extrabold text-gray-900">${item.title}</h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">${item.description}</p>
+
+                            <div class="pt-1 flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                <span><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> <b>${item.specific_location}</b></span>
+                                ${gpsCoords ? `<a href="campus_map.html" class="text-blue-600 hover:underline"><i class="fas fa-compass mr-1"></i>GPS: ${gpsCoords}</a>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="flex sm:flex-col justify-between items-end gap-3 shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
+                            <div class="px-3.5 py-1.5 rounded-full border text-xs font-extrabold flex items-center ${confidenceBadgeClass}">
+                                <i class="fas fa-brain mr-1.5"></i> ${item.confidence}% Match
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-end gap-2">
+                                <button onclick="openViewer(${item.id})" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center">
+                                    <i class="fas fa-cube mr-1.5"></i> 360° Photo
+                                </button>
+                                ${claimActionHTML}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- 360° PHOTO VIEWER LOGIC ---
+        let viewerImages = [];
+        let currentIndex = 0;
+        let isDragging = false;
+        let startX = 0;
+        const imgElement = document.getElementById("modal-image");
+        const viewerModal = document.getElementById("viewer-modal");
+
+        async function openViewer(itemId) {
+            viewerImages = [];
+            const loadingEl = document.getElementById("modal-loading");
+            const counterEl = document.getElementById("modal-frame-counter");
+            loadingEl.classList.remove("hidden");
+            loadingEl.innerText = "Loading 360° photos...";
+            counterEl.innerText = "";
+            imgElement.src = "";
+            viewerModal.style.display = "flex";
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/items/${itemId}/images/`);
+                const data = await response.json();
+
+                if (data.images && data.images.length > 0) {
+                    viewerImages = data.images.map(path => path.startsWith("http") ? path : `http://127.0.0.1:8000${path}`);
+                    currentIndex = 0;
+                    imgElement.src = viewerImages[0];
+                    loadingEl.classList.add("hidden");
+                    counterEl.innerText = `Angle 1 of ${viewerImages.length}`;
+                } else {
+                    loadingEl.innerText = "No photos were uploaded for this item.";
+                }
+            } catch (e) {
+                loadingEl.innerText = "Error loading images from server.";
+            }
+        }
+
+        function closeViewer() {
+            viewerModal.style.display = "none";
+            isDragging = false;
+        }
+
+        imgElement.addEventListener('mousedown', (e) => { isDragging = true; startX = e.pageX; });
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging || viewerImages.length === 0) return;
+            let dragDistance = e.pageX - startX;
+            if (Math.abs(dragDistance) > 20) {
+                if (dragDistance > 0) {
+                    currentIndex = (currentIndex + 1) % viewerImages.length;
+                } else {
+                    currentIndex = (currentIndex - 1 + viewerImages.length) % viewerImages.length;
+                }
+                imgElement.src = viewerImages[currentIndex];
+                document.getElementById("modal-frame-counter").innerText = `Angle ${currentIndex + 1} of ${viewerImages.length}`;
+                startX = e.pageX;
+            }
+        });
+
+        // --- CATEGORY-SPECIFIC OWNERSHIP CLAIM LOGIC (WITH DUPLICATE GUARD & MULTI-CLAIM QUEUE) ---
+        let currentClaimItemId = null;
+        let currentItemCategory = "";
+
+        function openClaimModal(itemId, itemCategory) {
+            const currentUserEmail = localStorage.getItem("user_email") || "anonymous@student.newinti.edu.my";
+            const existingQueue = JSON.parse(localStorage.getItem(`claims_queue_${itemId}`) || "[]");
+
+            if (existingQueue.some(c => c.claimant_email === currentUserEmail)) {
+                alert("Duplicate Claim Blocked: You have already submitted an ownership claim for Item #" + itemId + ". Campus Security is reviewing your answers.");
+                return;
+            }
+
+            currentClaimItemId = itemId;
+            currentItemCategory = itemCategory || "Other";
+
+            document.getElementById('claim-item-id-display').innerText = itemId;
+            document.getElementById('claim-item-cat-display').innerText = currentItemCategory;
+
+            const container = document.getElementById('dynamic-questions-container');
+            container.innerHTML = "";
+
+            const inputClass = "w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-sm mt-1 focus:bg-white focus:border-blue-500 focus:outline-none";
+            const labelClass = "block font-bold text-gray-700 mt-3";
+
+            const questionsByCategory = {
+                "Laptop/Computer": [
+                    ["1. Brand, Model & Color:", "e.g., MacBook Pro 14-inch, Space Gray"],
+                    ["2. Unique Identifier (Serial No. or Custom Stickers):", "e.g., Developer sticker next to the trackpad"],
+                    ["3. Specific accessory stored with it:", "e.g., Inside a black sleeve with its original charger"]
+                ],
+                "Mobile Phone": [
+                    ["1. Brand & Exact Model:", "e.g., iPhone 14 Pro, Samsung Galaxy S23"],
+                    ["2. Lock Screen / Wallpaper Description:", "e.g., Picture of a cat, or a blue gradient background"],
+                    ["3. Phone case color / condition:", "e.g., Clear silicone case with a slight yellow tint"]
+                ],
+                "Tablet": [
+                    ["1. Brand & Model:", "e.g., iPad Air 5th Gen, Silver"],
+                    ["2. Attached Keyboard or Pencil color:", "e.g., White Apple Pencil attached magnetically"],
+                    ["3. Home screen wallpaper or app layout detail:", "e.g., Procreate app on the dock"]
+                ],
+                "Bag/Backpack": [
+                    ["1. Brand & Color:", "e.g., Herschel Supply Co., Navy Blue"],
+                    ["2. Keychains, Pins, or Unique Pockets:", "e.g., A Pikachu keychain on the main zipper pull"],
+                    ["3. What high-value items are stored inside?", "e.g., A silver scientific calculator and a black umbrella"]
+                ],
+                "Jewelry/Bracelet": [
+                    ["1. Material & Type:", "e.g., 925 Sterling Silver bracelet"],
+                    ["2. Engravings, Charms, or Gemstones:", "e.g., Has a small heart charm with initials"],
+                    ["3. Clasp style or size:", "e.g., Lobster claw clasp, approx 7 inches"]
+                ],
+                "Keys": [
+                    ["1. Number of keys & Keychain style:", "e.g., 3 keys on a leather loop strap"],
+                    ["2. Specific key tags or access cards attached:", "e.g., Includes a blue campus hostel RFID card"],
+                    ["3. Door or room number it opens:", "e.g., Hostel Room 402 key"]
+                ],
+                "Water Bottle": [
+                    ["1. Brand, Material & Color:", "e.g., Hydro Flask, Mint Green, Stainless Steel"],
+                    ["2. Stickers, Dents, or Scratches:", "e.g., Small dent near the base and a university club sticker"],
+                    ["3. Cap / Lid type:", "e.g., Straw lid with a black handle loop"]
+                ],
+                "Other": [
+                    ["1. Detailed Description (Color, Material, Shape):", "e.g., Black folding umbrella, automatic button"],
+                    ["2. Unique Distinguishing Marks:", "e.g., Has a small tear on the storage sleeve"],
+                    ["3. Approximate time/location you lost it:", "e.g., Left outside Lecture Hall 2 around 3 PM"]
+                ]
+            };
+
+            const qList = questionsByCategory[currentItemCategory] || questionsByCategory["Other"];
+            container.innerHTML = qList.map((q, idx) => `
+                <div>
+                    <label class="${labelClass}">${q[0]}</label>
+                    <input type="text" id="dyn-f${idx + 1}" class="${inputClass}" placeholder="${q[1]}">
+                </div>
+            `).join('');
+
+            document.getElementById('claim-modal').style.display = "flex";
+        }
+
+        function closeClaimModal() {
+            document.getElementById('claim-modal').style.display = "none";
+        }
+
+        async function submitClaim() {
+            const field1 = document.getElementById('dyn-f1').value.trim();
+            const field2 = document.getElementById('dyn-f2').value.trim();
+            const field3 = document.getElementById('dyn-f3').value.trim();
+
+            if (!field1 || !field2 || !field3) {
+                alert("Security Error: Please answer all 3 verification questions.");
+                return;
+            }
+
+            const claimantEmail = localStorage.getItem("user_email") || "student@student.newinti.edu.my";
+
+            // Save into Multi-Claim Queue for Admin Dashboard
+            const queueKey = `claims_queue_${currentClaimItemId}`;
+            const existingQueue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+            existingQueue.push({
+                claim_id: Date.now(),
+                claimant_email: claimantEmail,
+                submitted_at: new Date().toLocaleString(),
+                category: currentItemCategory,
+                field1: field1,
+                field2: field2,
+                field3: field3
+            });
+            localStorage.setItem(queueKey, JSON.stringify(existingQueue));
+
+            const payload = {
+                field1: field1,
+                field2: field2,
+                field3: field3,
+                verify_brand: field1,
+                verify_marks: field2,
+                verify_contents: field3,
+                category: currentItemCategory,
+                claim_status: "Pending Review",
+                claimed_by: claimantEmail
+            };
+            localStorage.setItem(`claim_answers_${currentClaimItemId}`, JSON.stringify(payload));
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/items/${currentClaimItemId}/claim`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    closeClaimModal();
+                    showToast("Claim submitted! Campus Security will review your verification answers.", "success");
+                    const target = rawSearchResults.find(i => Number(i.id) === Number(currentClaimItemId));
+                    if (target) target.claim_status = "Pending Review";
+                    renderFilteredResults();
+                } else {
+                    const errData = await response.json().catch(() => ({}));
+                    showToast("Error: " + (errData.detail || "Could not submit claim."), "error");
+                }
+            } catch (error) {
+                showToast("Server connection error while submitting claim.", "error");
+            }
+        }
+
+        // Auto-detect ?item_id=... (from Home Recent Campus Reports) OR ?q=... (from Quick Search)
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const itemIdParam = params.get('item_id') || localStorage.getItem("selected_item_id");
+            const urlQuery = params.get('q') || localStorage.getItem("quick_search_query");
+
+            if (itemIdParam) {
+                localStorage.removeItem("selected_item_id");
+                loadSpecificItemById(itemIdParam);
+            } else if (urlQuery) {
+                localStorage.removeItem("quick_search_query");
+                document.getElementById("searchInput").value = urlQuery;
+                performSearch();
+            }
+        });
+    </script>
+
+    <!-- ==================== FIREBASE SESSION TRACKING ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQdoln7-kt31PdjsVYy93UHWoIfWmxaMc",
+            authDomain: "campus-lost-found-e1cff.firebaseapp.com",
+            projectId: "campus-lost-found-e1cff",
+            storageBucket: "campus-lost-found-e1cff.firebasestorage.app",
+            messagingSenderId: "31986563694",
+            appId: "1:31986563694:web:a9f94142c86a437e93447f",
+            measurementId: "G-ZSCXGS57KV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const adminEmails = ["admin@student.newinti.edu.my", "security@student.newinti.edu.my"];
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('user-email-display').innerText = user.email;
+                const profileSection = document.getElementById('user-profile-section');
+                profileSection.classList.remove('hidden');
+                profileSection.classList.add('flex');
+
+                const namePart = user.email.split('@')[0];
+                document.getElementById('user-avatar').innerText = namePart.slice(0, 2).toUpperCase();
+
+                if (adminEmails.includes(user.email)) {
+                    document.getElementById('admin-nav-btn').classList.remove('hidden');
+                }
+
+                localStorage.setItem("user_uid", user.uid);
+                localStorage.setItem("user_email", user.email);
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+                localStorage.removeItem("user_uid");
+                localStorage.removeItem("user_email");
+            } catch (error) {
+                alert("Error logging out: " + error.message);
+            }
+        };
     </script>
 </body>
 </html>
