@@ -3,84 +3,486 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lost & Found System</title>
+    <title>Student Portal - Campus Lost & Found System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
-        
-        /* Navigation Bar */
-        .navbar { background-color: #1a73e8; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .navbar h2 { margin: 0; font-size: 24px; letter-spacing: 1px; }
-        .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-weight: bold; transition: opacity 0.3s; }
-        .nav-links a:hover { opacity: 0.8; }
-        .admin-link { background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; }
+        /* Animated Hero Gradient */
+        .hero-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 50%, #1e3a8a 100%);
+            background-size: 200% 200%;
+            animation: heroGradient 12s ease infinite;
+        }
+        @keyframes heroGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-        /* Hero Section */
-        .hero { text-align: center; padding: 80px 20px; background: linear-gradient(to right, #1a73e8, #4285f4); color: white; }
-        .hero h1 { font-size: 48px; margin-bottom: 10px; }
-        .hero p { font-size: 20px; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; opacity: 0.9; }
+        /* Interactive Feature Card Hover Effect */
+        .feature-card {
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 30px -10px rgba(37, 99, 235, 0.18);
+        }
 
-        /* Dashboard Grid */
-        .container { max-width: 1000px; margin: -40px auto 40px auto; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        
-        /* Feature Cards */
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.08); text-align: center; transition: transform 0.3s; text-decoration: none; color: #333; display: block; border-top: 5px solid transparent; }
-        .card:hover { transform: translateY(-5px); }
-        .card h3 { font-size: 22px; margin-bottom: 10px; }
-        .card p { color: #666; font-size: 15px; margin-bottom: 20px; }
-        
-        /* Card Accents */
-        .card-report { border-top-color: #34a853; }
-        .card-search { border-top-color: #fbbc05; }
-        .card-map { border-top-color: #ea4335; }
-        
-        .icon { font-size: 40px; margin-bottom: 15px; }
+        /* Floating Animation for Hero Elements */
+        .float-slow {
+            animation: floatSlow 5s ease-in-out infinite;
+        }
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <!-- Top Navigation Bar -->
-    <div class="navbar">
-        <h2>Lost & Found System</h2>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="smart_search.html">Smart Search</a>
-            <a href="campus_map.html">Live Map</a>
-            <!-- Admin link styled slightly differently to stand out -->
-            <a href="admin_dashboard.html" class="admin-link">🛡️ Security Login</a>
+    <!-- ==================== TOP NAVIGATION BAR ==================== -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            
+            <!-- Brand Logo -->
+            <a href="index.html" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-600/30 group-hover:scale-105 transition">
+                    <i class="fas fa-satellite-dish text-lg"></i>
+                </div>
+                <div>
+                    <span class="text-lg font-extrabold tracking-tight text-gray-900">Campus<span class="text-blue-600">Portal</span></span>
+                    <span class="block text-[10px] font-semibold uppercase tracking-widest text-gray-400 -mt-1">Lost &amp; Found AI</span>
+                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <div class="hidden md:flex items-center space-x-1">
+                <a href="index.html" class="px-4 py-2 rounded-lg text-sm font-bold text-blue-600 bg-blue-50 transition">
+                    <i class="fas fa-home mr-1.5"></i> Home
+                </a>
+                <a href="report_item.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-bullhorn mr-1.5"></i> Report Item
+                </a>
+                <a href="smart_search.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-brain mr-1.5"></i> Smart Search
+                </a>
+                <a href="campus_map.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-map-marked-alt mr-1.5"></i> Live Map
+                </a>
+                <a id="admin-nav-btn" href="admin_dashboard.html" class="hidden ml-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition">
+                    <i class="fas fa-shield-alt mr-1"></i> Admin Dashboard
+                </a>
+            </div>
+
+            <!-- User Profile Display -->
+            <div id="user-profile-section" class="hidden items-center space-x-3 pl-4 border-l border-gray-200">
+                <div class="flex items-center space-x-2.5">
+                    <div id="user-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                        ST
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <p class="text-[11px] font-semibold text-emerald-600 flex items-center">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span> Verified Student
+                        </p>
+                        <p id="user-email-display" class="text-xs font-bold text-gray-700 truncate max-w-[160px]">Loading...</p>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 hover:border-red-600 text-xs font-bold px-3.5 py-2 rounded-xl transition duration-200 flex items-center shadow-sm">
+                    <i class="fas fa-sign-out-alt sm:mr-1.5"></i>
+                    <span class="hidden sm:inline">Logout</span>
+                </button>
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <!-- Welcome Hero Area -->
-    <div class="hero">
-        <h1>Did you lose something?</h1>
-        <p>Lost & Found System</p>
-    </div>
+    <!-- ==================== INTERACTIVE HERO SECTION ==================== -->
+    <section class="hero-bg relative overflow-hidden text-white pt-14 pb-28 px-4">
+        <canvas id="hero-canvas" class="absolute inset-0 w-full h-full pointer-events-none opacity-70"></canvas>
 
-    <!-- Main Tool Selection -->
-    <div class="container">
+        <div class="relative z-10 max-w-4xl mx-auto text-center">
+            <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full text-xs font-semibold text-blue-100 mb-6 float-slow">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span id="welcome-greeting">AI-Driven Campus Property Recovery System</span>
+            </div>
+
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-4">
+                Did you lose something on campus?
+            </h1>
+            <p class="text-blue-100 text-base sm:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
+                Pin lost or found items with live GPS coordinates, inspect items in 360°, and let our fuzzy-logic AI reunite you with your belongings.
+            </p>
+
+            <!-- Quick Interactive Search Bar -->
+            <form onsubmit="handleQuickSearch(event)" class="max-w-xl mx-auto bg-white/15 backdrop-blur-lg p-2 rounded-2xl border border-white/25 shadow-2xl flex items-center">
+                <div class="pl-4 pr-2 text-blue-200">
+                    <i class="fas fa-search text-lg"></i>
+                </div>
+                <input id="quick-search-input" type="text" placeholder="Quick search e.g. 'Black Leather Wallet near Library'..." class="w-full bg-transparent text-white placeholder-blue-200 text-sm px-2 py-2.5 focus:outline-none">
+                <button type="submit" class="bg-white text-blue-700 hover:bg-blue-50 font-bold text-sm px-5 py-2.5 rounded-xl shadow transition flex items-center shrink-0">
+                    <span>AI Search</span>
+                    <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </button>
+            </form>
+
+            <!-- Live Campus Pulse Stats (Excludes Resolved Cases) -->
+            <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto mt-8 pt-6 border-t border-white/15 text-center">
+                <div>
+                    <p id="hero-stat-total" class="text-2xl sm:text-3xl font-extrabold text-white">--</p>
+                    <p class="text-[11px] uppercase tracking-wider text-blue-200 font-semibold">Active Reports</p>
+                </div>
+                <div>
+                    <p id="hero-stat-found" class="text-2xl sm:text-3xl font-extrabold text-emerald-300">--</p>
+                    <p class="text-[11px] uppercase tracking-wider text-blue-200 font-semibold">Found &amp; Secured</p>
+                </div>
+                <div>
+                    <p id="hero-stat-lost" class="text-2xl sm:text-3xl font-extrabold text-amber-300">--</p>
+                    <p class="text-[11px] uppercase tracking-wider text-blue-200 font-semibold">Searching Now</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== MAIN FEATURE CARDS ==================== -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-20 flex-1 w-full">
         
-        <!-- Link to the GPS Reporting Form -->
-        <a href="report_item.html" class="card card-report">
-            <div class="icon">📢</div>
-            <h3>Report an Item</h3>
-            <p>Found a lost item? Or lost something yourself? Pin it on the campus map with your GPS.</p>
-        </a>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <!-- Card 1: Report an Item -->
+            <a href="report_item.html" class="feature-card group bg-white rounded-2xl p-7 shadow-lg border border-gray-100 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-green-600"></div>
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition duration-300">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">GPS + 360° Photo</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition mb-2">Report an Item</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6">
+                        Found a lost item or misplaced something yourself? Pin its exact location on the campus map and upload multi-angle photos.
+                    </p>
+                </div>
+                <div class="flex items-center text-emerald-600 font-bold text-sm group-hover:translate-x-1 transition">
+                    <span>Submit a Report</span>
+                    <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </div>
+            </a>
 
-        <!-- Link to the AI Search -->
-        <a href="smart_search.html" class="card card-search">
-            <div class="icon">🔍</div>
-            <h3>AI Smart Search</h3>
-            <p>Describe what you lost. Our fuzzy-logic AI will scan the database for the closest match.</p>
-        </a>
+            <!-- Card 2: AI Smart Search -->
+            <a href="smart_search.html" class="feature-card group bg-white rounded-2xl p-7 shadow-lg border border-gray-100 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 to-orange-500"></div>
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl shadow-sm group-hover:bg-amber-500 group-hover:text-white transition duration-300">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">Fuzzy-Logic AI</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition mb-2">AI Smart Search</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6">
+                        Describe what you lost in natural language. Our intelligent matching engine scans the database for the highest probability matches.
+                    </p>
+                </div>
+                <div class="flex items-center text-amber-600 font-bold text-sm group-hover:translate-x-1 transition">
+                    <span>Launch Smart Search</span>
+                    <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </div>
+            </a>
 
-        <!-- Link to the Analytics Map -->
-        <a href="campus_map.html" class="card card-map">
-            <div class="icon">📍</div>
-            <h3>Live Campus Map</h3>
-            <p>View real-time spatial analytics. See exactly where items are being dropped across the university.</p>
-        </a>
+            <!-- Card 3: Live Campus Map -->
+            <a href="campus_map.html" class="feature-card group bg-white rounded-2xl p-7 shadow-lg border border-gray-100 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-rose-600"></div>
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-14 h-14 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center text-2xl shadow-sm group-hover:bg-red-500 group-hover:text-white transition duration-300">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-red-50 text-red-700">Spatial Hotspots</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 group-hover:text-red-600 transition mb-2">Live Campus Map</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6">
+                        Explore real-time spatial analytics. See exact pins where items are being lost or recovered across university buildings.
+                    </p>
+                </div>
+                <div class="flex items-center text-red-600 font-bold text-sm group-hover:translate-x-1 transition">
+                    <span>Explore Live Map</span>
+                    <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </div>
+            </a>
+        </div>
 
-    </div>
+        <!-- ==================== LIVE RECENT CAMPUS ACTIVITY FEED ==================== -->
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-12">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
+                        <h2 class="text-xl font-bold text-gray-900">Recent Active Campus Reports</h2>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Click any item card below to inspect its specific details, 360° photos, or submit a claim.</p>
+                </div>
 
+                <!-- Interactive Feed Filter Pills -->
+                <div class="flex items-center space-x-2 bg-gray-100 p-1 rounded-xl self-start sm:self-auto">
+                    <button onclick="filterRecentFeed('ALL')" id="feed-btn-ALL" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-600 shadow-sm transition">All Active</button>
+                    <button onclick="filterRecentFeed('Found')" id="feed-btn-Found" class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition">Found</button>
+                    <button onclick="filterRecentFeed('Lost')" id="feed-btn-Lost" class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition">Lost</button>
+                </div>
+            </div>
+
+            <!-- Dynamic Feed Cards Grid -->
+            <div id="recent-items-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                <div class="col-span-full py-8 text-center text-gray-400 text-sm">
+                    <i class="fas fa-circle-notch fa-spin mr-2"></i> Loading live campus reports...
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== HOW IT WORKS STEPPER ==================== -->
+        <section class="mb-14">
+            <h3 class="text-center text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">Smart Recovery Workflow</h3>
+            <h2 class="text-center text-2xl font-extrabold text-gray-900 mb-8">How the Portal Reconnects You</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-extrabold flex items-center justify-center mx-auto mb-3">1</div>
+                    <h4 class="font-bold text-gray-800 mb-1">Pin &amp; Upload</h4>
+                    <p class="text-xs text-gray-500 leading-relaxed">Report a lost or found item with exact 3D floor zones, GPS coordinates, and multi-angle photos.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-extrabold flex items-center justify-center mx-auto mb-3">2</div>
+                    <h4 class="font-bold text-gray-800 mb-1">AI Fuzzy Matching</h4>
+                    <p class="text-xs text-gray-500 leading-relaxed">Our algorithm scores descriptions, categories, and locations to find likely matches.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-extrabold flex items-center justify-center mx-auto mb-3">3</div>
+                    <h4 class="font-bold text-gray-800 mb-1">Verify &amp; Claim</h4>
+                    <p class="text-xs text-gray-500 leading-relaxed">Answer ownership verification questions for Campus Security to approve your handover.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-400">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p>&copy; 2026 Intelligent Campus Lost &amp; Found Portal. All rights reserved.</p>
+            <p class="text-gray-400"><i class="fas fa-lock text-emerald-500 mr-1"></i> Protected by Firebase Auth &amp; Campus Security Verification</p>
+        </div>
+    </footer>
+
+    <!-- ==================== INTERACTIVE SCRIPTS (STATS, FEED & PARTICLES) ==================== -->
+    <script>
+        let recentItemsCache = [];
+
+        // Check if an item has been marked as Resolved by Admin
+        function isItemResolved(item) {
+            const resolvedMap = JSON.parse(localStorage.getItem("resolved_cases_map") || "{}");
+            return item.claim_status === "Resolved" || item.status === "Resolved" || Boolean(resolvedMap[item.id]);
+        }
+
+        // Quick Search Redirect
+        function handleQuickSearch(e) {
+            e.preventDefault();
+            const query = document.getElementById('quick-search-input').value.trim();
+            if (query) {
+                localStorage.setItem("quick_search_query", query);
+                window.location.href = `smart_search.html?q=${encodeURIComponent(query)}`;
+            } else {
+                window.location.href = "smart_search.html";
+            }
+        }
+
+        // Navigate directly to the specific item on smart_search.html
+        function openSpecificItemDetails(itemId) {
+            localStorage.setItem("selected_item_id", itemId);
+            window.location.href = `smart_search.html?item_id=${encodeURIComponent(itemId)}`;
+        }
+
+        // Fetch Live Stats & Active Recent Items from Backend (Hides Resolved Cases)
+        async function loadCampusPulse() {
+            try {
+                const res = await fetch("http://127.0.0.1:8000/items/");
+                const allItems = await res.json();
+
+                // Filter out Resolved cases so students only see Active unresolved items
+                const activeItems = allItems.filter(item => !isItemResolved(item));
+                recentItemsCache = activeItems.slice().reverse(); // Newest active first
+
+                const total = activeItems.length;
+                const found = activeItems.filter(i => i.item_type === 'Found').length;
+                const lost = activeItems.filter(i => i.item_type === 'Lost').length;
+
+                document.getElementById('hero-stat-total').innerText = total;
+                document.getElementById('hero-stat-found').innerText = found;
+                document.getElementById('hero-stat-lost').innerText = lost;
+
+                renderRecentFeed('ALL');
+            } catch (err) {
+                document.getElementById('hero-stat-total').innerText = "0";
+                document.getElementById('hero-stat-found').innerText = "0";
+                document.getElementById('hero-stat-lost').innerText = "0";
+                document.getElementById('recent-items-grid').innerHTML = `
+                    <div class="col-span-full py-6 text-center text-gray-400 text-xs">
+                        <i class="fas fa-plug mr-1"></i> Start your FastAPI Uvicorn server (127.0.0.1:8000) to view live campus activity.
+                    </div>
+                `;
+            }
+        }
+
+        function filterRecentFeed(type) {
+            ['ALL', 'Found', 'Lost'].forEach(t => {
+                const btn = document.getElementById(`feed-btn-${t}`);
+                if (t === type) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-600 shadow-sm transition";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition";
+                }
+            });
+            renderRecentFeed(type);
+        }
+
+        function renderRecentFeed(type) {
+            const grid = document.getElementById('recent-items-grid');
+            const filtered = type === 'ALL'
+                ? recentItemsCache.slice(0, 4)
+                : recentItemsCache.filter(i => i.item_type === type).slice(0, 4);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-6 text-center text-gray-400 text-sm">No active items in this category right now.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(item => {
+                const isLost = item.item_type === 'Lost';
+                const badgeColors = isLost ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700';
+                const dateStr = item.report_date ? new Date(item.report_date).toLocaleDateString() : 'Recently';
+                const loc = item.specific_location || 'Campus Area';
+                const descPreview = item.description ? item.description : 'Click to inspect item details & 360° photos';
+
+                return `
+                    <a href="smart_search.html?item_id=${item.id}" onclick="openSpecificItemDetails(${item.id}); return false;" class="group border border-gray-100 hover:border-blue-300 bg-gray-50/60 hover:bg-white rounded-xl p-4 transition shadow-sm hover:shadow-md flex flex-col justify-between cursor-pointer">
+                        <div>
+                            <div class="flex justify-between items-center mb-2.5">
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${badgeColors}">${item.item_type}</span>
+                                <span class="text-[11px] text-gray-400 font-semibold">#${item.id} • ${dateStr}</span>
+                            </div>
+                            <h4 class="font-bold text-gray-800 group-hover:text-blue-600 transition text-sm truncate">${item.title || 'Reported Item'}</h4>
+                            <p class="text-xs text-gray-500 mt-1 truncate"><i class="fas fa-map-pin text-red-400 mr-1"></i> ${loc}</p>
+                            <p class="text-[11px] text-gray-400 mt-1.5 line-clamp-1">${descPreview}</p>
+                        </div>
+                        <div class="mt-3 pt-2.5 border-t border-gray-100 flex justify-between items-center text-[11px] font-bold text-blue-600">
+                            <span>Inspect Item #${item.id}</span>
+                            <i class="fas fa-chevron-right text-[10px] group-hover:translate-x-1 transition"></i>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        }
+
+        // Interactive Hero Canvas Particles
+        const canvas = document.getElementById('hero-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeHeroCanvas() {
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+        }
+        window.addEventListener('resize', resizeHeroCanvas);
+        resizeHeroCanvas();
+
+        for (let i = 0; i < 40; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                r: Math.random() * 2 + 1,
+                dx: (Math.random() - 0.5) * 0.6,
+                dy: (Math.random() - 0.5) * 0.6
+            });
+        }
+
+        function animateHeroParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, idx) => {
+                p.x += p.dx;
+                p.y += p.dy;
+                if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+
+                ctx.fillStyle = 'rgba(191, 219, 254, 0.6)';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let j = idx + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (dist < 110) {
+                        ctx.strokeStyle = `rgba(191, 219, 254, ${0.2 - dist / 550})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(animateHeroParticles);
+        }
+        animateHeroParticles();
+        loadCampusPulse();
+    </script>
+
+    <!-- ==================== FIREBASE TRACKING SCRIPT ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQdoln7-kt31PdjsVYy93UHWoIfWmxaMc",
+            authDomain: "campus-lost-found-e1cff.firebaseapp.com",
+            projectId: "campus-lost-found-e1cff",
+            storageBucket: "campus-lost-found-e1cff.firebasestorage.app",
+            messagingSenderId: "31986563694",
+            appId: "1:31986563694:web:a9f94142c86a437e93447f",
+            measurementId: "G-ZSCXGS57KV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const adminEmails = ["admin@student.newinti.edu.my", "security@student.newinti.edu.my"];
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('user-email-display').innerText = user.email;
+                const profileSection = document.getElementById('user-profile-section');
+                profileSection.classList.remove('hidden');
+                profileSection.classList.add('flex');
+
+                const namePart = user.email.split('@')[0];
+                document.getElementById('user-avatar').innerText = namePart.slice(0, 2).toUpperCase();
+                document.getElementById('welcome-greeting').innerText = `Welcome back, ${namePart} • INTI Smart Campus Portal`;
+
+                if (adminEmails.includes(user.email)) {
+                    document.getElementById('admin-nav-btn').classList.remove('hidden');
+                }
+                
+                localStorage.setItem("user_uid", user.uid);
+                localStorage.setItem("user_email", user.email);
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+                localStorage.removeItem("user_uid");
+                localStorage.removeItem("user_email");
+            } catch (error) {
+                alert("Error logging out: " + error.message);
+            }
+        };
+    </script>
 </body>
 </html>
