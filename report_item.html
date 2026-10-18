@@ -1,142 +1,940 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Item - Campus Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; background: #f4f4f9; display: flex; justify-content: center; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        label { font-weight: bold; color: #333; }
-        
-        button { width: 100%; border: none; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; margin-top: 10px; transition: 0.2s; }
-        .btn-submit { background: #28a745; color: white; font-size: 16px; }
-        .btn-submit:hover { background: #218838; }
-        .btn-location { background: #007bff; color: white; margin-bottom: 10px; }
-        .btn-location:hover { background: #0056b3; }
-        
-        /* Proactive Match & AI Alert Boxes */
-        #ai-results { padding: 15px; background: #e8f0fe; border-radius: 8px; display: none; margin-bottom: 15px; }
-        .tag { display: inline-block; background: #1a73e8; color: white; padding: 4px 10px; border-radius: 15px; font-size: 12px; margin: 3px; }
+        .page-header-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 50%, #1e3a8a 100%);
+        }
 
-        #match-alert { padding: 15px; background: #fff3cd; border-left: 5px solid #ffc107; border-radius: 8px; display: none; margin-bottom: 15px; }
-        .match-card { background: white; padding: 15px; margin-top: 10px; border: 1px solid #ddd; border-radius: 6px; }
-        .btn-inspect { background: #17a2b8; color: white; padding: 8px; margin-top: 10px; }
-        .btn-inspect:hover { background: #138496; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
 
-        /* Integrated 360 Viewer Modal (The Popup) */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
-        .modal-content { background-color: #222; margin: auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; text-align: center; position: relative; color: white; }
-        .close-btn { color: white; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .close-btn:hover { color: #ff4444; }
-        #modal-image { width: 100%; max-width: 400px; height: 400px; object-fit: cover; border-radius: 8px; cursor: ew-resize; user-select: none; background: #333; margin-top: 15px; }
+        #modal-image {
+            width: 100%;
+            max-width: 400px;
+            height: 360px;
+            object-fit: cover;
+            border-radius: 12px;
+            cursor: ew-resize;
+            user-select: none;
+            background: #1e293b;
+            margin: 15px auto 0 auto;
+            display: block;
+        }
+
+        /* ================= 6-LEVEL 3D ARCHITECTURAL HOLOGRAM MAP ================= */
+        .iso-map-wrapper {
+            background: radial-gradient(circle at 50% 50%, #161a2e 0%, #07080d 100%);
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 620px;
+            overflow: hidden;
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.95), 0 10px 25px rgba(0, 0, 0, 0.15);
+            position: relative;
+            user-select: none;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+
+        .iso-hud-hint {
+            position: absolute;
+            top: 14px;
+            left: 18px;
+            color: rgba(255, 255, 255, 0.75);
+            font-family: monospace;
+            font-size: 11px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* Main 3D Isometric Stage */
+        .iso-container {
+            position: relative;
+            width: 240px;
+            height: 240px;
+            transform-style: preserve-3d;
+            transform: rotateX(60deg) rotateZ(-45deg) translate3d(-120px, 120px, -210px);
+            transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* When a single floor is isolated, center the stage */
+        .iso-container.has-selection {
+            transform: rotateX(52deg) rotateZ(-35deg) translate3d(0px, 0px, 0px);
+        }
+
+        .iso-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease, visibility 0.35s ease;
+        }
+
+        /* Stacked 6-Floor Positions */
+        .floor-6 { transform: translateZ(425px); }
+        .floor-5 { transform: translateZ(340px); }
+        .floor-4 { transform: translateZ(255px); }
+        .floor-3 { transform: translateZ(170px); }
+        .floor-2 { transform: translateZ(85px); }
+        .floor-1 { transform: translateZ(0px); }
+
+        /* Hover Effect when viewing all floors */
+        .iso-container:not(.has-selection) .floor-6:hover { transform: translateZ(438px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-5:hover { transform: translateZ(353px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-4:hover { transform: translateZ(268px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-3:hover { transform: translateZ(183px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-2:hover { transform: translateZ(98px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-1:hover { transform: translateZ(13px) scale(1.04); }
+
+        /* MAKE OTHER FLOORS COMPLETELY INVISIBLE WHEN ONE FLOOR IS SELECTED */
+        .iso-container.has-selection .iso-layer:not(.selected) {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+        /* Enlarge and center the selected floor so every individual room tag is easy to click */
+        .iso-container.has-selection .iso-layer.selected {
+            transform: translateZ(40px) scale(1.38) !important;
+            z-index: 50;
+        }
+
+        /* Top Blueprint Surface */
+        .iso-top {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: var(--top-bg);
+            border: 2px solid var(--wall-border);
+            box-shadow: inset 0 0 22px var(--glow-color), 0 0 12px rgba(0, 0, 0, 0.6);
+            transform-style: preserve-3d;
+            transition: all 0.3s ease;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.22) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.22) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Underground Carpark Parking Bay Lines */
+        .floor-1 .iso-top {
+            background-image: 
+                repeating-linear-gradient(to bottom, transparent 0px, transparent 18px, rgba(255, 255, 255, 0.35) 18px, rgba(255, 255, 255, 0.35) 20px),
+                linear-gradient(to right, rgba(255, 255, 255, 0.32) 2px, transparent 2px);
+            background-size: 74px 100%, 74px 100%;
+        }
+
+        .iso-room {
+            position: absolute;
+            border: 1.5px solid rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.15);
+            pointer-events: none;
+        }
+
+        .iso-front {
+            position: absolute;
+            width: 100%;
+            height: 18px;
+            bottom: -18px;
+            left: 0;
+            transform-origin: top;
+            transform: rotateX(-90deg);
+            background: var(--front-bg);
+            border: 1.5px solid var(--wall-border);
+            border-top: none;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            color: #ffffff;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.95);
+            box-sizing: border-box;
+        }
+
+        .iso-right {
+            position: absolute;
+            width: 18px;
+            height: 100%;
+            right: -18px;
+            top: 0;
+            transform-origin: left;
+            transform: rotateY(90deg);
+            background: var(--right-bg);
+            border: 1.5px solid var(--wall-border);
+            border-left: none;
+            box-sizing: border-box;
+        }
+
+        .iso-core {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1.5px solid rgba(255, 255, 255, 0.8);
+            transform-style: preserve-3d;
+            pointer-events: none;
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.4) 0px, rgba(255,255,255,0.4) 2px, transparent 2px, transparent 6px);
+        }
+
+        /* Upright Floating 3D Text Labels for Campus Areas */
+        .iso-zone-tag {
+            position: absolute;
+            transform: translateZ(16px) rotateZ(35deg) rotateX(-52deg);
+            padding: 2.5px 6px;
+            border-radius: 5px;
+            border: 1.5px solid rgba(255,255,255,0.95);
+            color: #fff;
+            font-size: 8.5px;
+            font-weight: 800;
+            white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.85);
+            cursor: pointer;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.85);
+            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .iso-zone-tag:hover, .iso-zone-tag.active-zone {
+            transform: translateZ(26px) rotateZ(35deg) rotateX(-52deg) scale(1.18);
+            border-color: #fde047;
+            background-color: #0f172a !important;
+            color: #fde047;
+            z-index: 100;
+        }
+
+        /* Floor Color Themes */
+        .floor-6 { --top-bg: rgba(219, 112, 147, 0.45); --front-bg: rgba(160, 50, 90, 0.9); --right-bg: rgba(180, 70, 110, 0.9); --wall-border: rgba(251, 207, 232, 0.85); --glow-color: rgba(236, 72, 153, 0.45); }
+        .floor-5 { --top-bg: rgba(147, 112, 219, 0.45); --front-bg: rgba(109, 72, 185, 0.9); --right-bg: rgba(88, 53, 158, 0.92); --wall-border: rgba(216, 180, 254, 0.85); --glow-color: rgba(168, 85, 247, 0.45); }
+        .floor-4 { --top-bg: rgba(239, 95, 85, 0.45); --front-bg: rgba(194, 59, 48, 0.9); --right-bg: rgba(158, 42, 34, 0.92); --wall-border: rgba(254, 202, 202, 0.85); --glow-color: rgba(239, 68, 68, 0.45); }
+        .floor-3 { --top-bg: rgba(59, 130, 246, 0.45); --front-bg: rgba(29, 78, 216, 0.9); --right-bg: rgba(30, 64, 175, 0.92); --wall-border: rgba(191, 219, 254, 0.85); --glow-color: rgba(59, 130, 246, 0.45); }
+        .floor-2 { --top-bg: rgba(46, 160, 105, 0.45); --front-bg: rgba(21, 117, 71, 0.9); --right-bg: rgba(17, 94, 57, 0.92); --wall-border: rgba(167, 243, 208, 0.85); --glow-color: rgba(16, 185, 129, 0.45); }
+        .floor-1 { --top-bg: rgba(217, 130, 43, 0.45); --front-bg: rgba(168, 90, 18, 0.9); --right-bg: rgba(138, 70, 12, 0.92); --wall-border: rgba(253, 230, 138, 0.85); --glow-color: rgba(245, 158, 11, 0.45); }
+
+        .iso-layer:hover .iso-top {
+            border-color: #ffffff;
+            box-shadow: inset 0 0 28px var(--glow-color), 0 0 18px var(--glow-color);
+        }
+
+        .iso-layer.selected .iso-top {
+            border: 3px solid #ffffff;
+            box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.6), 0 0 30px var(--glow-color);
+        }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <div class="card">
-        <h2 style="margin-top: 0;">📢 Report an Item</h2>
-        
-        <label>Item Type</label>
-        <select id="item_type" onchange="toggleLocationUI()">
-            <option value="Lost">I Lost Something</option>
-            <option value="Found">I Found Something</option>
-        </select>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-6 right-6 z-50 space-y-3 max-w-sm w-full pointer-events-none"></div>
 
-        <label>Title</label>
-        <input type="text" id="title" placeholder="e.g., Black Laptop Bag">
+    <!-- ==================== TOP NAVIGATION BAR ==================== -->
+    <nav class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <a href="index.html" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-600/30 group-hover:scale-105 transition">
+                    <i class="fas fa-satellite-dish text-lg"></i>
+                </div>
+                <div>
+                    <span class="text-lg font-extrabold tracking-tight text-gray-900">Campus<span class="text-blue-600">Portal</span></span>
+                    <span class="block text-[10px] font-semibold uppercase tracking-widest text-gray-400 -mt-1">Lost &amp; Found AI</span>
+                </div>
+            </a>
 
-        <label>Description</label>
-        <textarea id="description" rows="2" placeholder="Any scratches or details?"></textarea>
+            <div class="hidden md:flex items-center space-x-1">
+                <a href="index.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-home mr-1.5"></i> Home
+                </a>
+                <a href="report_item.html" class="px-4 py-2 rounded-lg text-sm font-bold text-blue-600 bg-blue-50 transition">
+                    <i class="fas fa-bullhorn mr-1.5"></i> Report Item
+                </a>
+                <a href="smart_search.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-brain mr-1.5"></i> Smart Search
+                </a>
+                <a href="campus_map.html" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-map-marked-alt mr-1.5"></i> Live Map
+                </a>
+                <a id="admin-nav-btn" href="admin_dashboard.html" class="hidden ml-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition">
+                    <i class="fas fa-shield-alt mr-1"></i> Admin Dashboard
+                </a>
+            </div>
 
-        <label>📷 Upload Photos (Max 6)</label>
-        <input type="file" id="imageFiles" multiple accept="image/*">
-
-        <!-- GPS Section (Hidden by default, shows only for "Found") -->
-        <div id="location-section" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd;">
-            <label>📍 Where did you find it?</label>
-            <p style="font-size: 12px; color: #666; margin: 5px 0 10px 0;">Help the owner by pinning the exact location.</p>
-            <button type="button" class="btn-location" onclick="getLocation()">Get My GPS Coordinates</button>
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="lat" placeholder="Latitude" readonly style="margin:0;">
-                <input type="number" id="lng" placeholder="Longitude" readonly style="margin:0;">
+            <div id="user-profile-section" class="hidden items-center space-x-3 pl-4 border-l border-gray-200">
+                <div class="flex items-center space-x-2.5">
+                    <div id="user-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                        ST
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <p class="text-[11px] font-semibold text-emerald-600 flex items-center">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span> Verified Student
+                        </p>
+                        <p id="user-email-display" class="text-xs font-bold text-gray-700 truncate max-w-[160px]">Loading...</p>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 hover:border-red-600 text-xs font-bold px-3.5 py-2 rounded-xl transition duration-200 flex items-center shadow-sm">
+                    <i class="fas fa-sign-out-alt sm:mr-1.5"></i>
+                    <span class="hidden sm:inline">Logout</span>
+                </button>
             </div>
         </div>
+    </nav>
 
-        <button class="btn-submit" onclick="submitFullReport()">Submit Report</button>
-        <div id="status-message" style="margin-top:15px; text-align:center; font-weight:bold;"></div>
-
-        <!-- AI Image Recognition Box -->
-        <div id="ai-results" style="margin-top: 15px;">
-            <p style="margin:0 0 10px 0;"><b>🤖 AI Object Recognition:</b></p>
-            <div id="tag-container"></div>
+    <!-- ==================== PAGE HEADER ==================== -->
+    <section class="page-header-bg text-white py-8 px-4 shadow-md">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <span class="inline-flex items-center space-x-1.5 bg-white/10 border border-white/20 px-3 py-0.5 rounded-full text-xs font-semibold text-blue-200 mb-2">
+                    <i class="fas fa-cubes text-emerald-300"></i>
+                    <span>3D Spatial Blueprint + AI Object Recognition</span>
+                </span>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Report Lost or Found Property</h1>
+                <p class="text-blue-100 text-xs sm:text-sm mt-1">Click a 3D floor to isolate it, choose the exact room/zone, and upload photos for AI matching.</p>
+            </div>
+            <a href="smart_search.html" class="self-start sm:self-auto bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center">
+                <i class="fas fa-search mr-2"></i> Search Existing Items
+            </a>
         </div>
+    </section>
 
-        <!-- Proactive Match Alert Box -->
-        <div id="match-alert" style="margin-top: 15px;">
-            <h3 style="margin: 0 0 5px 0; color: #856404;">⚠️ Wait! Is this yours?</h3>
-            <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">We found items in the database that match your description.</p>
-            <div id="matches-list"></div>
+    <!-- ==================== MAIN 2-COLUMN WORKSPACE ==================== -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+            <!-- LEFT COLUMN: 6-LEVEL 3D ARCHITECTURAL HOLOGRAM MAP (7 cols) -->
+            <div class="lg:col-span-7 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+                    <div>
+                        <h2 class="text-base font-extrabold text-gray-900 flex items-center">
+                            <i class="fas fa-layer-group text-blue-600 mr-2"></i> 1. Select 3D Campus Level &amp; Room
+                        </h2>
+                        <p class="text-xs text-gray-500">Click any floor to hide other levels and view all rooms clearly.</p>
+                    </div>
+                    <!-- Show All Floors Reset Button (No Top View needed) -->
+                    <button type="button" id="show-all-floors-btn" onclick="clearFloorSelection()" class="hidden px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition flex items-center">
+                        <i class="fas fa-layer-group mr-1.5"></i> Show All 6 Floors
+                    </button>
+                </div>
+
+                <!-- Quick Floor Pills (Allows instant switching even when 1 floor is isolated) -->
+                <div class="flex flex-wrap items-center gap-1.5 mb-3">
+                    <span class="text-[11px] font-bold text-gray-400 uppercase mr-1">Floor:</span>
+                    <button type="button" onclick="selectFloorByLevel('Level 6')" id="pill-Level 6" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100 transition">L6</button>
+                    <button type="button" onclick="selectFloorByLevel('Level 5')" id="pill-Level 5" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition">L5</button>
+                    <button type="button" onclick="selectFloorByLevel('Level 4')" id="pill-Level 4" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition">L4</button>
+                    <button type="button" onclick="selectFloorByLevel('Level 3')" id="pill-Level 3" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition">L3</button>
+                    <button type="button" onclick="selectFloorByLevel('Level 2')" id="pill-Level 2" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">L2</button>
+                    <button type="button" onclick="selectFloorByLevel('Underground - Carpark')" id="pill-Underground - Carpark" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">Underground</button>
+                    <button type="button" onclick="clearFloorSelection()" class="ml-auto px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition">All Floors</button>
+                </div>
+
+                <!-- Hidden Input for Form Submission -->
+                <input type="hidden" id="campus_level" name="campus_level" value="">
+
+                <div class="iso-map-wrapper">
+                    <div class="iso-hud-hint" id="iso-hud-text">3D Campus Blueprint • Click Any Floor to Isolate It</div>
+
+                    <div class="iso-container" id="isoContainer">
+                        <!-- Level 6 -->
+                        <div class="iso-layer floor-6" data-level="Level 6">
+                            <div class="iso-front"></div>
+                            <div class="iso-right"></div>
+                            <div class="iso-top"></div>
+                        </div>
+
+                        <!-- Level 5 -->
+                        <div class="iso-layer floor-5" data-level="Level 5">
+                            <div class="iso-front"></div>
+                            <div class="iso-right"></div>
+                            <div class="iso-top"></div>
+                        </div>
+
+                        <!-- Level 4 -->
+                        <div class="iso-layer floor-4" data-level="Level 4">
+                            <div class="iso-front"></div>
+                            <div class="iso-right"></div>
+                            <div class="iso-top"></div>
+                        </div>
+
+                        <!-- Level 3 -->
+                        <div class="iso-layer floor-3" data-level="Level 3">
+                            <div class="iso-front"></div>
+                            <div class="iso-right"></div>
+                            <div class="iso-top"></div>
+                        </div>
+
+                        <!-- Level 2 -->
+                        <div class="iso-layer floor-2" data-level="Level 2">
+                            <div class="iso-front"></div>
+                            <div class="iso-right"></div>
+                            <div class="iso-top"></div>
+                        </div>
+
+                        <!-- Underground (Carpark) -->
+                        <div class="iso-layer floor-1" data-level="Level 1">
+                            <div class="iso-front"></div>
+                            <div class="iso-right"></div>
+                            <div class="iso-top"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selection Feedback Bar + Clickable Room Buttons Grid for the Selected Floor -->
+                <div id="floor-feedback" class="hidden mt-3 bg-slate-900 text-white p-4 rounded-xl border-l-4 border-emerald-400">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider text-emerald-400 font-bold block">✅ Isolated Floor &amp; Room Selection</span>
+                            <span id="floor-name" class="font-bold text-sm"></span>
+                        </div>
+                        <button type="button" onclick="clearFloorSelection()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg font-bold transition">
+                            <i class="fas fa-th-large mr-1"></i> Show All Floors
+                        </button>
+                    </div>
+                    <!-- Easy-Click Room Chips for the Active Floor -->
+                    <div class="pt-2 border-t border-slate-700/80">
+                        <span class="text-[11px] text-slate-400 block mb-1.5">Click a specific room or area on this floor:</span>
+                        <div id="active-floor-rooms" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: REPORT DETAILS FORM & AI FEEDBACK (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
+                    <h2 class="text-base font-extrabold text-gray-900 flex items-center border-b border-gray-100 pb-3">
+                        <i class="fas fa-clipboard-list text-blue-600 mr-2"></i> 2. Item &amp; Location Details
+                    </h2>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Report Type</label>
+                            <select id="item_type" onchange="toggleLocationUI()" class="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-sm font-semibold text-gray-800 focus:bg-white focus:border-blue-500 focus:outline-none">
+                                <option value="Lost">🔴 I Lost Something</option>
+                                <option value="Found">🟢 I Found Something</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Category</label>
+                            <select id="category" class="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-sm font-semibold text-gray-800 focus:bg-white focus:border-blue-500 focus:outline-none">
+                                <option value="Laptop/Computer">Laptop / Computer</option>
+                                <option value="Mobile Phone">Mobile Phone</option>
+                                <option value="Tablet">Tablet</option>
+                                <option value="Bag/Backpack">Bag / Backpack</option>
+                                <option value="Jewelry/Bracelet">Jewelry / Bracelet</option>
+                                <option value="Keys">Keys</option>
+                                <option value="Water Bottle">Water Bottle</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Specific Location Details</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                                <i class="fas fa-map-pin"></i>
+                            </span>
+                            <input type="text" id="specific_location" placeholder="Click a 3D floor & room tag (e.g. Level 3 - LR305)" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-sm focus:bg-white focus:border-blue-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- High-Risk Hotspots Box -->
+                    <div id="hotspots-container" style="display: none;" class="bg-amber-50 p-3.5 rounded-xl border border-amber-200">
+                        <span class="text-xs font-bold text-amber-800 block mb-2">
+                            <i class="fas fa-fire text-amber-500 mr-1"></i> High-Risk Areas on Campus (Click to Quick-Fill):
+                        </span>
+                        <div id="hotspots-list" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Description &amp; Distinguishing Marks</label>
+                        <textarea id="description" rows="3" placeholder="Mention brand, color, scratches, stickers, or accessories..." class="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-sm focus:bg-white focus:border-blue-500 focus:outline-none"></textarea>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-bold text-gray-700 uppercase">📷 Upload Photos (Max 6 for 360° View)</label>
+                            <span id="photo-count-badge" class="text-[11px] font-semibold text-blue-600">0 / 6 selected</span>
+                        </div>
+                        <input type="file" id="imageFiles" multiple accept="image/*" onchange="previewImages()" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 cursor-pointer border border-dashed border-gray-300 rounded-xl p-2 bg-gray-50">
+                        <div id="image-preview-container" class="flex flex-wrap gap-2 mt-2.5"></div>
+                    </div>
+
+                    <!-- GPS Coordinates Section -->
+                    <div id="location-section" class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="mb-2">
+                            <label id="location-label" class="text-xs font-bold text-gray-800">📍 Where did you last see it?</label>
+                            <p id="location-desc" class="text-[11px] text-gray-500">Pin the exact GPS coordinates on campus to help track it.</p>
+                        </div>
+                        <button type="button" onclick="getLocation()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center mb-2.5">
+                            <i class="fas fa-location-crosshairs mr-2"></i> Get My Live GPS Coordinates
+                        </button>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <input type="number" step="any" id="lat" placeholder="Latitude (e.g. 5.3415)" readonly class="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-xs text-gray-600 font-mono">
+                            <input type="number" step="any" id="lng" placeholder="Longitude (e.g. 100.2818)" readonly class="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-xs text-gray-600 font-mono">
+                        </div>
+                    </div>
+
+                    <button id="submit-report-btn" onclick="submitFullReport()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-extrabold text-sm py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-600/25 transition flex items-center justify-center">
+                        <i class="fas fa-paper-plane mr-2"></i> Submit Campus Report
+                    </button>
+
+                    <div id="status-message" class="text-center text-xs font-bold pt-1"></div>
+                </div>
+
+                <!-- AI Image Recognition Box -->
+                <div id="ai-results" style="display: none;" class="bg-blue-50 border border-blue-200 p-4 rounded-2xl shadow-sm">
+                    <p class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">
+                        <i class="fas fa-robot mr-1.5"></i> AI Object Recognition Tags Detected:
+                    </p>
+                    <div id="tag-container" class="flex flex-wrap gap-1.5"></div>
+                </div>
+
+                <!-- Proactive Match Alert Box -->
+                <div id="match-alert" style="display: none;" class="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-2xl shadow-sm">
+                    <h3 class="text-base font-extrabold text-amber-900 flex items-center">
+                        <i class="fas fa-bolt text-amber-500 mr-2"></i> Wait! Is one of these yours?
+                    </h3>
+                    <p class="text-xs text-amber-700 mt-0.5 mb-3">
+                        Our AI found existing items in the campus database that closely match your report:
+                    </p>
+                    <div id="matches-list" class="space-y-3"></div>
+                </div>
+
+            </div>
         </div>
-    </div>
+    </main>
 
-    <!-- The 360° Viewer Modal -->
+    <!-- ==================== THE 360° VIEWER MODAL ==================== -->
     <div id="viewer-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeViewer()">&times;</span>
-            <h3 style="margin-top: 0;">🔍 360° Inspection</h3>
-            <p style="color: #aaa; font-size: 14px;">↔️ Click and drag the image left or right</p>
-            <img id="modal-image" draggable="false" src="">
-            <p id="modal-loading" style="display:none; color: yellow;">Loading images...</p>
+        <div class="bg-slate-900 text-white p-6 rounded-2xl w-11/12 max-w-md text-center relative shadow-2xl border border-slate-700">
+            <span class="absolute top-3 right-4 text-2xl text-gray-400 hover:text-red-400 cursor-pointer font-bold" onclick="closeViewer()">&times;</span>
+            <h3 class="text-lg font-bold text-blue-400"><i class="fas fa-cube mr-2"></i> 360° Inspection</h3>
+            <p class="text-xs text-slate-400 mt-1">↔️ Click and drag the image left or right</p>
+            <img id="modal-image" draggable="false" src="" alt="360 inspection">
+            <p id="modal-loading" class="text-amber-400 text-xs font-semibold mt-3" style="display:none;">Loading images...</p>
         </div>
     </div>
 
+    <!-- ==================== DYNAMIC OWNERSHIP VERIFICATION MODAL ==================== -->
+    <div id="claim-modal" class="modal">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl w-11/12 max-w-lg text-left relative shadow-2xl border border-gray-100">
+            <span class="absolute top-4 right-5 text-2xl text-gray-400 hover:text-red-500 cursor-pointer font-bold" onclick="closeClaimModal()">&times;</span>
+            <h3 class="text-lg font-extrabold text-blue-600 border-b border-gray-100 pb-2.5">
+                🔐 Category-Specific Ownership Verification
+            </h3>
+            <p class="text-xs text-gray-500 mt-2 mb-4">
+                Claiming Item #<span id="claim-item-id-display" class="font-bold text-gray-800"></span>
+                (<span id="claim-item-cat-display" class="font-bold text-blue-600"></span>).
+                Please provide precise security details so Campus Security can verify your ownership:
+            </p>
+            
+            <div id="dynamic-questions-container" class="space-y-3 text-xs"></div>
+            
+            <button id="confirm-claim-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl mt-6 transition shadow-md text-xs uppercase tracking-wider" onclick="submitClaim()">
+                <i class="fas fa-shield-alt mr-1.5"></i> Submit Security Verification
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== CORE APPLICATION SCRIPTS ==================== -->
     <script>
-        // --- UX Fix 1: Toggle GPS UI based on Item Type ---
-        function toggleLocationUI() {
-            const itemType = document.getElementById("item_type").value;
-            const locSection = document.getElementById("location-section");
-            if (itemType === "Found") {
-                locSection.style.display = "block"; // Show GPS
-            } else {
-                locSection.style.display = "none";  // Hide GPS
-                // Clear the GPS data so we don't accidentally send it
-                document.getElementById("lat").value = "";
-                document.getElementById("lng").value = "";
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const colors = {
+                success: 'bg-emerald-600 border-emerald-400',
+                error: 'bg-red-600 border-red-400',
+                info: 'bg-blue-600 border-blue-400'
+            };
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center p-4 text-white rounded-2xl shadow-xl border ${colors[type] || colors.info} transition-all duration-300`;
+            toast.innerHTML = `<div class="text-xs font-semibold flex-1">${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // --- 3D FLOOR SELECTOR LOGIC (ISOLATES SELECTED FLOOR & SEPARATES ROOMS 1-BY-1) ---
+        const isoLayers = document.querySelectorAll('.iso-layer');
+        const isoContainer = document.getElementById('isoContainer');
+        const levelInput = document.getElementById('campus_level');
+        const floorFeedback = document.getElementById('floor-feedback');
+        const floorNameDisplay = document.getElementById('floor-name');
+        const specificLocationInput = document.getElementById('specific_location');
+        const showAllFloorsBtn = document.getElementById('show-all-floors-btn');
+        const hudText = document.getElementById('iso-hud-text');
+
+        // Separated LR301-308, LR401-408, LR501-508 1-by-1
+        const campusLayout = {
+            'Level 6': {
+                levelValue: 'Level 6',
+                wallLabel: 'LEVEL 6',
+                badgeColor: '#be185d',
+                summary: 'Level 6 — Balcony',
+                rooms: [{ top: '12%', left: '12%', width: '72%', height: '64%' }],
+                zones: [
+                    { label: 'Balcony', top: '42%', left: '34%' }
+                ]
+            },
+            'Level 5': {
+                levelValue: 'Level 5',
+                wallLabel: 'LEVEL 5',
+                badgeColor: '#6d28d9',
+                summary: 'Level 5 — LT, Middle Rest Area, LR501 to LR508',
+                rooms: [
+                    { top: '6%', left: '6%', width: '38%', height: '30%' },
+                    { top: '6%', right: '6%', width: '42%', height: '30%' },
+                    { bottom: '6%', left: '6%', width: '74%', height: '52%' }
+                ],
+                zones: [
+                    { label: 'LT', top: '14%', left: '14%' },
+                    { label: 'Middle Rest Area', top: '14%', right: '10%' },
+                    { label: 'LR501', top: '46%', left: '8%' },
+                    { label: 'LR502', top: '46%', left: '30%' },
+                    { label: 'LR503', top: '46%', left: '52%' },
+                    { label: 'LR504', top: '46%', left: '74%' },
+                    { label: 'LR505', bottom: '12%', left: '8%' },
+                    { label: 'LR506', bottom: '12%', left: '28%' },
+                    { label: 'LR507', bottom: '12%', left: '48%' },
+                    { label: 'LR508', bottom: '12%', left: '68%' }
+                ]
+            },
+            'Level 4': {
+                levelValue: 'Level 4',
+                wallLabel: 'LEVEL 4',
+                badgeColor: '#b91c1c',
+                summary: 'Level 4 — Big Study Area, LR401 to LR408',
+                rooms: [
+                    { top: '6%', left: '6%', width: '82%', height: '32%' },
+                    { bottom: '6%', left: '6%', width: '74%', height: '52%' }
+                ],
+                zones: [
+                    { label: 'Big Study Area', top: '15%', left: '28%' },
+                    { label: 'LR401', top: '46%', left: '8%' },
+                    { label: 'LR402', top: '46%', left: '30%' },
+                    { label: 'LR403', top: '46%', left: '52%' },
+                    { label: 'LR404', top: '46%', left: '74%' },
+                    { label: 'LR405', bottom: '12%', left: '8%' },
+                    { label: 'LR406', bottom: '12%', left: '28%' },
+                    { label: 'LR407', bottom: '12%', left: '48%' },
+                    { label: 'LR408', bottom: '12%', left: '68%' }
+                ]
+            },
+            'Level 3': {
+                levelValue: 'Level 3',
+                wallLabel: 'LEVEL 3',
+                badgeColor: '#1d4ed8',
+                summary: 'Level 3 — Cube Study Area, Thermofluid Lab, Lab A, LR301 to LR308',
+                rooms: [
+                    { top: '6%', left: '6%', width: '40%', height: '28%' },
+                    { top: '6%', right: '6%', width: '42%', height: '28%' },
+                    { top: '38%', right: '6%', width: '30%', height: '24%' },
+                    { bottom: '6%', left: '6%', width: '74%', height: '48%' }
+                ],
+                zones: [
+                    { label: 'Cube Study Area', top: '12%', left: '8%' },
+                    { label: 'Thermofluid Lab', top: '12%', right: '8%' },
+                    { label: 'Lab A', top: '42%', right: '10%' },
+                    { label: 'LR301', top: '44%', left: '8%' },
+                    { label: 'LR302', top: '44%', left: '27%' },
+                    { label: 'LR303', top: '44%', left: '46%' },
+                    { label: 'LR304', top: '62%', left: '8%' },
+                    { label: 'LR305', top: '62%', left: '27%' },
+                    { label: 'LR306', top: '62%', left: '46%' },
+                    { label: 'LR307', bottom: '10%', left: '14%' },
+                    { label: 'LR308', bottom: '10%', left: '40%' }
+                ]
+            },
+            'Level 2': {
+                levelValue: 'Level 2',
+                wallLabel: 'LEVEL 2',
+                badgeColor: '#15803d',
+                summary: 'Level 2 — Cafeteria, Middle Area, Study Area',
+                rooms: [
+                    { top: '8%', left: '8%', width: '44%', height: '38%' },
+                    { top: '34%', left: '34%', width: '34%', height: '30%' },
+                    { bottom: '10%', left: '8%', width: '54%', height: '30%' }
+                ],
+                zones: [
+                    { label: 'Cafeteria', top: '16%', left: '14%' },
+                    { label: 'Middle Area', top: '42%', left: '32%' },
+                    { label: 'Study Area', bottom: '16%', left: '16%' }
+                ]
+            },
+            'Level 1': {
+                levelValue: 'Underground - Carpark',
+                wallLabel: 'UNDERGROUND',
+                badgeColor: '#b45309',
+                summary: 'Underground — Carpark',
+                rooms: [{ top: '10%', right: '10%', width: '36%', height: '44%' }],
+                zones: [
+                    { label: 'Carpark', top: '44%', left: '28%' }
+                ]
+            }
+        };
+
+        // Helper to render clickable room chips below the 3D map when a floor is isolated
+        function renderActiveFloorRoomChips(cfg, selectedZoneLabel = null) {
+            const roomContainer = document.getElementById('active-floor-rooms');
+            roomContainer.innerHTML = '';
+            if (!cfg || !cfg.zones) return;
+
+            cfg.zones.forEach(z => {
+                const isSelected = selectedZoneLabel === z.label;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = isSelected
+                    ? 'px-3 py-1 rounded-lg text-xs font-extrabold bg-amber-400 text-slate-900 shadow transition'
+                    : 'px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 transition';
+                btn.innerText = z.label;
+                btn.onclick = () => {
+                    selectFloorAndZone(cfg, z.label);
+                };
+                roomContainer.appendChild(btn);
+            });
+        }
+
+        function selectFloorAndZone(cfg, zoneLabel = null) {
+            const targetLayer = [...isoLayers].find(l => l.getAttribute('data-level') === cfg.levelValue);
+            if (!targetLayer) return;
+
+            isoLayers.forEach(l => l.classList.remove('selected'));
+            targetLayer.classList.add('selected');
+            isoContainer.classList.add('has-selection');
+            showAllFloorsBtn.classList.remove('hidden');
+
+            // Highlight active 3D tag on the floor
+            document.querySelectorAll('.iso-zone-tag').forEach(t => t.classList.remove('active-zone'));
+            if (zoneLabel) {
+                targetLayer.querySelectorAll('.iso-zone-tag').forEach(t => {
+                    if (t.innerText === zoneLabel) t.classList.add('active-zone');
+                });
+            }
+
+            levelInput.value = cfg.levelValue;
+            floorNameDisplay.innerText = zoneLabel ? `${cfg.levelValue} — ${zoneLabel}` : cfg.summary;
+            floorFeedback.classList.remove('hidden');
+            hudText.innerText = `Isolated ${cfg.levelValue} • Click a Room Tag or "Show All 6 Floors"`;
+
+            specificLocationInput.value = zoneLabel ? `${cfg.levelValue} - ${zoneLabel}` : cfg.levelValue;
+            renderActiveFloorRoomChips(cfg, zoneLabel);
+        }
+
+        function selectFloorByLevel(levelVal) {
+            const cfg = Object.values(campusLayout).find(c => c.levelValue === levelVal);
+            if (cfg) {
+                selectFloorAndZone(cfg, null);
             }
         }
-        
-        // Run once on load to set initial state
+
+        function clearFloorSelection() {
+            isoLayers.forEach(l => l.classList.remove('selected'));
+            document.querySelectorAll('.iso-zone-tag').forEach(t => t.classList.remove('active-zone'));
+            isoContainer.classList.remove('has-selection');
+            showAllFloorsBtn.classList.add('hidden');
+            levelInput.value = '';
+            floorFeedback.classList.add('hidden');
+            hudText.innerText = '3D Campus Blueprint • Click Any Floor to Isolate It';
+        }
+
+        // Populate Each 3D Floor & Attach Click Listeners
+        isoLayers.forEach(layer => {
+            const rawLevel = layer.getAttribute('data-level');
+            const cfg = campusLayout[rawLevel];
+            const topSurface = layer.querySelector('.iso-top');
+            const frontWall = layer.querySelector('.iso-front');
+
+            if (cfg && topSurface && frontWall) {
+                layer.setAttribute('data-level', cfg.levelValue);
+                frontWall.innerText = cfg.wallLabel;
+
+                cfg.rooms.forEach(r => {
+                    const room = document.createElement('div');
+                    room.className = 'iso-room';
+                    Object.assign(room.style, r);
+                    topSurface.appendChild(room);
+                });
+
+                const core = document.createElement('div');
+                core.className = 'iso-core';
+                topSurface.appendChild(core);
+
+                cfg.zones.forEach(z => {
+                    const tag = document.createElement('div');
+                    tag.className = 'iso-zone-tag';
+                    tag.style.backgroundColor = cfg.badgeColor;
+                    tag.innerText = z.label;
+                    if (z.top) tag.style.top = z.top;
+                    if (z.bottom) tag.style.bottom = z.bottom;
+                    if (z.left) tag.style.left = z.left;
+                    if (z.right) tag.style.right = z.right;
+
+                    tag.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        selectFloorAndZone(cfg, z.label);
+                    });
+
+                    topSurface.appendChild(tag);
+                });
+            }
+
+            layer.addEventListener('click', function() {
+                if (cfg) {
+                    selectFloorAndZone(cfg, null);
+                }
+            });
+        });
+
+        // --- Fetch Most Lostable Places (Hotspots) ---
+        async function loadTopLocations() {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/items/top-locations/");
+                const locations = await response.json();
+                
+                const hotspotsContainer = document.getElementById("hotspots-container");
+                const hotspotsList = document.getElementById("hotspots-list");
+                if (!hotspotsContainer) return;
+
+                hotspotsList.innerHTML = "";
+                
+                if (locations.length > 0) {
+                    locations.forEach(loc => {
+                        const badge = document.createElement("button");
+                        badge.type = "button";
+                        badge.className = "bg-amber-200/80 hover:bg-amber-300 text-amber-900 px-2.5 py-1 rounded-full text-[11px] font-bold transition";
+                        badge.innerText = `${loc.location} (${loc.count} lost)`;
+                        badge.onclick = () => {
+                            document.getElementById("specific_location").value = loc.location;
+                        };
+                        hotspotsList.appendChild(badge);
+                    });
+                    hotspotsContainer.style.display = "block";
+                } else {
+                    hotspotsContainer.style.display = "none";
+                }
+            } catch (err) {
+                console.error("Error loading hotspots", err);
+            }
+        }
+
+        function toggleLocationUI() {
+            const itemType = document.getElementById("item_type").value;
+            const locLabel = document.getElementById("location-label");
+            const locDesc = document.getElementById("location-desc");
+            const hotspotsContainer = document.getElementById("hotspots-container");
+
+            if (itemType === "Found") {
+                locLabel.innerText = "📍 Where did you find it?";
+                locDesc.innerText = "Help the owner by pinning the exact location.";
+                if (hotspotsContainer) hotspotsContainer.style.display = "none"; 
+            } else {
+                locLabel.innerText = "📍 Where did you last see it?";
+                locDesc.innerText = "Pinpoint the area you suspect you lost it.";
+                loadTopLocations(); 
+            }
+        }
+
         toggleLocationUI();
 
-        // --- Core GPS Logic ---
+        function previewImages() {
+            const previewContainer = document.getElementById("image-preview-container");
+            const files = document.getElementById("imageFiles").files;
+            const badge = document.getElementById("photo-count-badge");
+
+            previewContainer.innerHTML = "";
+
+            if (files.length > 6) {
+                alert("Please select a maximum of 6 photos.");
+                document.getElementById("imageFiles").value = "";
+                badge.innerText = "0 / 6 selected";
+                return;
+            }
+
+            badge.innerText = `${files.length} / 6 selected`;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.type.match('image.*')) continue;
+
+                const img = document.createElement("img");
+                img.src = URL.createObjectURL(file);
+                img.className = "w-16 h-16 object-cover rounded-xl border border-gray-200 shadow-sm";
+                previewContainer.appendChild(img);
+            }
+        }
+
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
-                    document.getElementById("lat").value = pos.coords.latitude;
-                    document.getElementById("lng").value = pos.coords.longitude;
+                    document.getElementById("lat").value = pos.coords.latitude.toFixed(6);
+                    document.getElementById("lng").value = pos.coords.longitude.toFixed(6);
+                    showToast("GPS coordinates captured!", "success");
+                }, () => {
+                    alert("Unable to get your location. Please allow browser location access.");
                 });
             } else {
                 alert("GPS not supported by this browser.");
             }
         }
 
-        // --- Core Submit Logic ---
         async function submitFullReport() {
             const status = document.getElementById("status-message");
+            const submitBtn = document.getElementById("submit-report-btn");
             const itemType = document.getElementById("item_type").value;
-            
+            const selectedFloor = document.getElementById("campus_level").value;
+            const rawSpecificLoc = document.getElementById("specific_location").value.trim();
+
+            const combinedLocation = selectedFloor && !rawSpecificLoc.includes(selectedFloor)
+                ? (rawSpecificLoc ? `${selectedFloor} - ${rawSpecificLoc}` : selectedFloor)
+                : rawSpecificLoc;
+
             document.getElementById("ai-results").style.display = "none";
             document.getElementById("match-alert").style.display = "none";
-            
+
             status.innerText = "Processing Text & GPS... ⏳";
-            status.style.color = "blue";
+            status.style.color = "#2563eb";
+            submitBtn.disabled = true;
+
+            const activeUserId = localStorage.getItem("user_uid") || "anonymous";
 
             const itemData = {
-                title: document.getElementById("title").value,
+                title: document.getElementById("category").value,
                 description: document.getElementById("description").value,
                 item_type: itemType,
+                campus_level: selectedFloor || null,
+                specific_location: combinedLocation || "Campus Area",
+                report_date: new Date().toISOString(),
                 latitude: parseFloat(document.getElementById("lat").value) || null,
-                longitude: parseFloat(document.getElementById("lng").value) || null
+                longitude: parseFloat(document.getElementById("lng").value) || null,
+                reporter_id: activeUserId
             };
 
             try {
@@ -145,121 +943,143 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(itemData)
                 });
+
+                if (!itemResponse.ok) {
+                    const errorData = await itemResponse.json();
+                    status.innerText = "❌ " + (errorData.detail || "Failed to save report.");
+                    status.style.color = "#dc2626";
+                    submitBtn.disabled = false;
+                    return;
+                }
+
                 const newItem = await itemResponse.json();
                 const itemId = newItem.id;
 
                 const fileInput = document.getElementById("imageFiles");
+
                 if (fileInput.files.length > 0) {
                     status.innerText = "Analyzing Images with AI... 🤖";
+
                     const formData = new FormData();
-                    for (let file of fileInput.files) { formData.append("files", file); }
+                    for (let file of fileInput.files) {
+                        formData.append("files", file);
+                    }
 
                     const imgResponse = await fetch(`http://127.0.0.1:8000/items/${itemId}/images/`, {
                         method: "POST",
                         body: formData
                     });
+
                     const imgData = await imgResponse.json();
 
                     if (imgData.ai_analysis && imgData.ai_analysis.length > 0) {
                         document.getElementById("ai-results").style.display = "block";
                         const tagContainer = document.getElementById("tag-container");
                         tagContainer.innerHTML = "";
+
                         imgData.ai_analysis[0].ai_tags.forEach(tag => {
-                            tagContainer.innerHTML += `<span class="tag">${tag}</span>`;
+                            tagContainer.innerHTML += `<span class="bg-blue-600 text-white px-2.5 py-1 rounded-full text-xs font-bold">${tag}</span>`;
                         });
                     }
                 }
 
                 if (itemType === "Lost") {
                     status.innerText = "Scanning campus for your lost item... 🔍";
+
                     const matchRes = await fetch(`http://127.0.0.1:8000/items/${itemId}/matches/`);
                     const matchData = await matchRes.json();
-                    const strongMatches = matchData.ai_predictions.filter(m => m.confidence_score >= 70);
-                    
+
+                    const strongMatches = (matchData.ai_predictions || []).filter(
+                        m => m.confidence_score >= 70
+                    );
+
                     if (strongMatches.length > 0) {
                         const matchesList = document.getElementById("matches-list");
                         matchesList.innerHTML = "";
+
                         strongMatches.forEach(m => {
-                            // Print exactly what the server sent so we can debug it
-                            console.log("Match Data from Server:", m);
-
-                            // Force the description to appear
-                            let descText = "No description provided.";
-                            if (m.matched_description && m.matched_description.trim() !== "") {
-                                descText = m.matched_description;
-                            }
-
-                            // Build a Google Maps button if GPS data exists
-                            let locationBtn = "";
-                            if (m.latitude && m.longitude) {
-                                locationBtn = `<button class="btn-location" style="margin-top: 10px; width: 48%; margin-left: 4%;" onclick="window.open('https://www.google.com/maps?q=${m.latitude},${m.longitude}', '_blank')">📍 View Map</button>`;
-                            } else {
-                                locationBtn = `<span style="font-size: 12px; color: #999; margin-left: 10px;">(No GPS data)</span>`;
-                            }
+                            let descText = (m.matched_description && m.matched_description.trim() !== "")
+                                ? m.matched_description
+                                : "No description provided.";
 
                             matchesList.innerHTML += `
-                                <div class="match-card">
-                                    <div style="font-weight: bold; font-size: 16px; color: #333;">
-                                        [Item #${m.matched_item_id}] ${m.matched_title}
+                                <div class="bg-white p-4 rounded-xl border border-amber-200 shadow-sm">
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <span class="font-extrabold text-sm text-gray-900">[Item #${m.matched_item_id}] ${m.matched_title}</span>
+                                        <span class="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full text-xs font-extrabold">🤖 ${m.confidence_score}% Match</span>
                                     </div>
-                                    
-                                    <!-- Description Area -->
-                                    <div style="color: #444; font-size: 14px; margin: 10px 0; padding: 8px; background: #f8f9fa; border-left: 4px solid #1a73e8; border-radius: 4px;">
+
+                                    <div class="text-xs text-gray-600 my-2 p-2.5 bg-slate-50 border-l-4 border-blue-500 rounded">
                                         <b>📝 Details:</b> ${descText}
                                     </div>
 
-                                    <div style="color: #155724; font-size: 13px; font-weight: bold; margin: 5px 0;">
-                                        🤖 ${m.confidence_score}% AI Match
+                                    <div class="flex gap-2 mt-3">
+                                        <button type="button" class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition" onclick="openViewer(${m.matched_item_id})">
+                                            🔍 Inspect 360°
+                                        </button>
+
+                                        ${m.latitude ? `
+                                            <button type="button" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition"
+                                                onclick="window.open('https://www.google.com/maps?q=${m.latitude},${m.longitude}', '_blank')">
+                                                📍 View Map
+                                            </button>
+                                        ` : ''}
                                     </div>
-                                    
-                                    <!-- Side-by-side Buttons -->
-                                    <div style="display: flex; align-items: center;">
-                                        <button class="btn-inspect" style="width: 48%; margin-top: 10px;" onclick="openViewer(${m.matched_item_id})">🔍 Inspect 360°</button>
-                                        ${locationBtn}
-                                    </div>
+
+                                    <button type="button" id="claim-btn-${m.matched_item_id}" class="w-full mt-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2.5 rounded-lg transition shadow-sm" onclick="openClaimModal(${m.matched_item_id}, '${(m.matched_title || '').replace(/'/g, "\\'")}')">
+                                        ✋ Claim This Item
+                                    </button>
                                 </div>
                             `;
                         });
+
                         document.getElementById("match-alert").style.display = "block";
                         status.innerText = "✅ Report saved. Please check the potential matches below!";
-                        status.style.color = "green";
+                        status.style.color = "#059669";
+                        showToast("Potential matches found!", "success");
                     } else {
                         status.innerText = "✅ Report saved! We will notify you if it turns up.";
-                        status.style.color = "green";
+                        status.style.color = "#059669";
+                        showToast("Lost item report saved!", "success");
                     }
                 } else {
                     status.innerText = "✅ Thank you! Found Item Report Saved.";
-                    status.style.color = "green";
+                    status.style.color = "#059669";
+                    showToast("Found item report saved!", "success");
                 }
             } catch (err) {
-                status.innerText = "❌ Error connecting to server.";
-                status.style.color = "red";
+                console.error(err);
+                status.innerText = "❌ Error connecting to server. Is Uvicorn running?";
+                status.style.color = "#dc2626";
+            } finally {
+                submitBtn.disabled = false;
             }
         }
 
-        // --- UX Fix 2: Integrated 360 Viewer Modal Logic ---
+        // --- Integrated 360 Viewer Modal Logic ---
         let viewerImages = [];
         let currentIndex = 0;
         let isDragging = false;
         let startX = 0;
+
         const imgElement = document.getElementById("modal-image");
         const modal = document.getElementById("viewer-modal");
 
         async function openViewer(itemId) {
-            // THE FIX: Completely empty out the old images!
-            viewerImages = []; 
-            
+            viewerImages = [];
             document.getElementById("modal-loading").style.display = "block";
             document.getElementById("modal-loading").innerText = "Loading images...";
-            imgElement.src = ""; // Clear old image
-            modal.style.display = "flex"; // Show popup
-            
+            imgElement.src = "";
+            modal.style.display = "flex";
+
             try {
                 const response = await fetch(`http://127.0.0.1:8000/items/${itemId}/images/`);
                 const data = await response.json();
-                
+
                 if (data.images && data.images.length > 0) {
-                    viewerImages = data.images.map(path => `http://127.0.0.1:8000${path}`);
+                    viewerImages = data.images.map(path =>
+                        path.startsWith("http") ? path : `http://127.0.0.1:8000${path}`
+                    );
                     currentIndex = 0;
                     imgElement.src = viewerImages[0];
                     document.getElementById("modal-loading").style.display = "none";
@@ -267,28 +1087,232 @@
                     document.getElementById("modal-loading").innerText = "No photos were uploaded for this item.";
                 }
             } catch (e) {
+                console.error(e);
                 document.getElementById("modal-loading").innerText = "Error loading images.";
             }
         }
 
         function closeViewer() {
             modal.style.display = "none";
-            isDragging = false; // Reset drag state safely
+            isDragging = false;
         }
 
-        // 360 Drag Listeners
         imgElement.addEventListener('mousedown', (e) => { isDragging = true; startX = e.pageX; });
         window.addEventListener('mouseup', () => { isDragging = false; });
         window.addEventListener('mousemove', (e) => {
             if (!isDragging || viewerImages.length === 0) return;
             let dragDistance = e.pageX - startX;
             if (Math.abs(dragDistance) > 20) {
-                if (dragDistance > 0) { currentIndex = (currentIndex + 1) % viewerImages.length; } 
+                if (dragDistance > 0) { currentIndex = (currentIndex + 1) % viewerImages.length; }
                 else { currentIndex = (currentIndex - 1 + viewerImages.length) % viewerImages.length; }
                 imgElement.src = viewerImages[currentIndex];
                 startX = e.pageX;
             }
         });
+
+        // --- Category-Specific Ownership Claim Verification Logic (With Duplicate Prevention & Multi-Claim Queue) ---
+        let currentClaimItemId = null;
+        let currentItemCategory = "";
+
+        function openClaimModal(itemId, itemCategory) {
+            const currentUserEmail = localStorage.getItem("user_email") || "anonymous@student.newinti.edu.my";
+            const existingQueue = JSON.parse(localStorage.getItem(`claims_queue_${itemId}`) || "[]");
+
+            // Prevent the SAME user from submitting duplicate claims for the same item
+            if (existingQueue.some(c => c.claimant_email === currentUserEmail)) {
+                alert("Duplicate Claim Blocked: You have already submitted an ownership claim for Item #" + itemId + ". Campus Security is reviewing your answers.");
+                return;
+            }
+
+            currentClaimItemId = itemId;
+            currentItemCategory = itemCategory || "Other";
+
+            document.getElementById('claim-item-id-display').innerText = itemId;
+            document.getElementById('claim-item-cat-display').innerText = currentItemCategory;
+
+            const container = document.getElementById('dynamic-questions-container');
+            container.innerHTML = "";
+
+            const inputClass = "w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-sm mt-1 focus:bg-white focus:border-blue-500 focus:outline-none";
+            const labelClass = "block font-bold text-gray-700 mt-3";
+
+            const questionsByCategory = {
+                "Laptop/Computer": [
+                    ["1. Brand, Model & Color:", "e.g., MacBook Pro 14-inch, Space Gray"],
+                    ["2. Unique Identifier (Serial No. or Custom Stickers):", "e.g., Developer sticker next to the trackpad"],
+                    ["3. Specific accessory stored with it:", "e.g., Inside a black sleeve with its original charger"]
+                ],
+                "Mobile Phone": [
+                    ["1. Brand & Exact Model:", "e.g., iPhone 14 Pro, Samsung Galaxy S23"],
+                    ["2. Lock Screen / Wallpaper Description:", "e.g., Picture of a cat, or a blue gradient background"],
+                    ["3. Phone case color / condition:", "e.g., Clear silicone case with a slight yellow tint"]
+                ],
+                "Tablet": [
+                    ["1. Brand & Model:", "e.g., iPad Air 5th Gen, Silver"],
+                    ["2. Attached Keyboard or Pencil color:", "e.g., White Apple Pencil attached magnetically"],
+                    ["3. Home screen wallpaper or app layout detail:", "e.g., Procreate app on the dock"]
+                ],
+                "Bag/Backpack": [
+                    ["1. Brand & Color:", "e.g., Herschel Supply Co., Navy Blue"],
+                    ["2. Keychains, Pins, or Unique Pockets:", "e.g., A Pikachu keychain on the main zipper pull"],
+                    ["3. What high-value items are stored inside?", "e.g., A silver scientific calculator and a black umbrella"]
+                ],
+                "Jewelry/Bracelet": [
+                    ["1. Material & Type:", "e.g., 925 Sterling Silver bracelet"],
+                    ["2. Engravings, Charms, or Gemstones:", "e.g., Has a small heart charm with initials"],
+                    ["3. Clasp style or size:", "e.g., Lobster claw clasp, approx 7 inches"]
+                ],
+                "Keys": [
+                    ["1. Number of keys & Keychain style:", "e.g., 3 keys on a leather loop strap"],
+                    ["2. Specific key tags or access cards attached:", "e.g., Includes a blue campus hostel RFID card"],
+                    ["3. Door or room number it opens:", "e.g., Hostel Room 402 key"]
+                ],
+                "Water Bottle": [
+                    ["1. Brand, Material & Color:", "e.g., Hydro Flask, Mint Green, Stainless Steel"],
+                    ["2. Stickers, Dents, or Scratches:", "e.g., Small dent near the base and a university club sticker"],
+                    ["3. Cap / Lid type:", "e.g., Straw lid with a black handle loop"]
+                ],
+                "Other": [
+                    ["1. Detailed Description (Color, Material, Shape):", "e.g., Black folding umbrella, automatic button"],
+                    ["2. Unique Distinguishing Marks:", "e.g., Has a small tear on the storage sleeve"],
+                    ["3. Approximate time/location you lost it:", "e.g., Left outside Lecture Hall 2 around 3 PM"]
+                ]
+            };
+
+            const qList = questionsByCategory[currentItemCategory] || questionsByCategory["Other"];
+            container.innerHTML = qList.map((q, idx) => `
+                <div>
+                    <label class="${labelClass}">${q[0]}</label>
+                    <input type="text" id="dyn-f${idx + 1}" class="${inputClass}" placeholder="${q[1]}">
+                </div>
+            `).join('');
+
+            document.getElementById('claim-modal').style.display = "flex";
+        }
+
+        function closeClaimModal() {
+            document.getElementById('claim-modal').style.display = "none";
+        }
+
+        // --- Submit Dynamic Claim (Stores Multi-Claim Queue + Sends to Backend) ---
+        async function submitClaim() {
+            const field1 = document.getElementById('dyn-f1').value.trim();
+            const field2 = document.getElementById('dyn-f2').value.trim();
+            const field3 = document.getElementById('dyn-f3').value.trim();
+
+            if (!field1 || !field2 || !field3) {
+                alert("Security Error: Please answer all 3 verification questions.");
+                return;
+            }
+
+            const claimantEmail = localStorage.getItem("user_email") || "student@student.newinti.edu.my";
+
+            // Append this claim to the item's multi-claim queue so Admin can compare if 2 different students claim it
+            const queueKey = `claims_queue_${currentClaimItemId}`;
+            const existingQueue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+            const newClaimEntry = {
+                claim_id: Date.now(),
+                claimant_email: claimantEmail,
+                submitted_at: new Date().toLocaleString(),
+                category: currentItemCategory,
+                field1: field1,
+                field2: field2,
+                field3: field3
+            };
+            existingQueue.push(newClaimEntry);
+            localStorage.setItem(queueKey, JSON.stringify(existingQueue));
+
+            const payload = {
+                field1: field1,
+                field2: field2,
+                field3: field3,
+                verify_brand: field1,
+                verify_marks: field2,
+                verify_contents: field3,
+                category: currentItemCategory,
+                claim_status: "Pending Review"
+            };
+            localStorage.setItem(`claim_answers_${currentClaimItemId}`, JSON.stringify(payload));
+
+            try {
+                const response = await fetch(
+                    `http://127.0.0.1:8000/items/${currentClaimItemId}/claim`,
+                    {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }
+                );
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert("❌ " + (errorData.detail || "Claim submission failed."));
+                    return;
+                }
+
+                alert(
+                    `✅ Security Verification Submitted!\n\n` +
+                    `Your answers for Item #${currentClaimItemId} (${claimantEmail}) have been sent to Campus Security.\n\n` +
+                    `Please proceed to the main Security Office with your Student ID to complete the physical claim.`
+                );
+
+                closeClaimModal();
+            } catch (err) {
+                console.error(err);
+                alert("Error sending claim. Make sure server is running.");
+            }
+        }
+    </script>
+
+    <!-- ==================== FIREBASE SESSION TRACKING ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQdoln7-kt31PdjsVYy93UHWoIfWmxaMc",
+            authDomain: "campus-lost-found-e1cff.firebaseapp.com",
+            projectId: "campus-lost-found-e1cff",
+            storageBucket: "campus-lost-found-e1cff.firebasestorage.app",
+            messagingSenderId: "31986563694",
+            appId: "1:31986563694:web:a9f94142c86a437e93447f",
+            measurementId: "G-ZSCXGS57KV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const adminEmails = ["admin@student.newinti.edu.my", "security@student.newinti.edu.my"];
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('user-email-display').innerText = user.email;
+                const profileSection = document.getElementById('user-profile-section');
+                profileSection.classList.remove('hidden');
+                profileSection.classList.add('flex');
+
+                const namePart = user.email.split('@')[0];
+                document.getElementById('user-avatar').innerText = namePart.slice(0, 2).toUpperCase();
+
+                if (adminEmails.includes(user.email)) {
+                    document.getElementById('admin-nav-btn').classList.remove('hidden');
+                }
+
+                localStorage.setItem("user_uid", user.uid);
+                localStorage.setItem("user_email", user.email);
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+                localStorage.removeItem("user_uid");
+                localStorage.removeItem("user_email");
+            } catch (error) {
+                alert("Error logging out: " + error.message);
+            }
+        };
     </script>
 </body>
 </html>
