@@ -39,7 +39,7 @@
             display: block;
         }
 
-        /* ================= 6-LEVEL 3D ARCHITECTURAL HOLOGRAM MAP ================= */
+        /* ================= 7-LEVEL 3D ARCHITECTURAL HOLOGRAM MAP ================= */
         .iso-map-wrapper {
             background: radial-gradient(circle at 50% 50%, #161a2e 0%, #07080d 100%);
             padding: 20px;
@@ -47,7 +47,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 620px;
+            height: 680px;
             overflow: hidden;
             box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.95), 0 10px 25px rgba(0, 0, 0, 0.15);
             position: relative;
@@ -68,19 +68,19 @@
             z-index: 20;
         }
 
-        /* Main 3D Isometric Stage */
+        /* Main 3D Isometric Stage (Adjusted for 7 Levels) */
         .iso-container {
             position: relative;
             width: 240px;
             height: 240px;
             transform-style: preserve-3d;
-            transform: rotateX(60deg) rotateZ(-45deg) translate3d(-120px, 120px, -210px);
+            transform: rotateX(60deg) rotateZ(-45deg) translate3d(-135px, 135px, -235px);
             transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         /* When a single floor is isolated, center the stage */
         .iso-container.has-selection {
-            transform: rotateX(52deg) rotateZ(-35deg) translate3d(0px, 0px, 0px);
+            transform: rotateX(50deg) rotateZ(-32deg) translate3d(0px, 0px, 0px);
         }
 
         .iso-layer {
@@ -94,21 +94,23 @@
             transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease, visibility 0.35s ease;
         }
 
-        /* Stacked 6-Floor Positions */
-        .floor-6 { transform: translateZ(425px); }
-        .floor-5 { transform: translateZ(340px); }
-        .floor-4 { transform: translateZ(255px); }
-        .floor-3 { transform: translateZ(170px); }
-        .floor-2 { transform: translateZ(85px); }
+        /* Stacked 7-Floor Positions (Level 7 Rooftop down to Underground Carpark) */
+        .floor-7 { transform: translateZ(468px); }
+        .floor-6 { transform: translateZ(390px); }
+        .floor-5 { transform: translateZ(312px); }
+        .floor-4 { transform: translateZ(234px); }
+        .floor-3 { transform: translateZ(156px); }
+        .floor-2 { transform: translateZ(78px); }
         .floor-1 { transform: translateZ(0px); }
 
-        /* Hover Effect when viewing all floors */
-        .iso-container:not(.has-selection) .floor-6:hover { transform: translateZ(438px) scale(1.04); }
-        .iso-container:not(.has-selection) .floor-5:hover { transform: translateZ(353px) scale(1.04); }
-        .iso-container:not(.has-selection) .floor-4:hover { transform: translateZ(268px) scale(1.04); }
-        .iso-container:not(.has-selection) .floor-3:hover { transform: translateZ(183px) scale(1.04); }
-        .iso-container:not(.has-selection) .floor-2:hover { transform: translateZ(98px) scale(1.04); }
-        .iso-container:not(.has-selection) .floor-1:hover { transform: translateZ(13px) scale(1.04); }
+        /* Hover Effect when viewing all 7 floors */
+        .iso-container:not(.has-selection) .floor-7:hover { transform: translateZ(480px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-6:hover { transform: translateZ(402px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-5:hover { transform: translateZ(324px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-4:hover { transform: translateZ(246px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-3:hover { transform: translateZ(168px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-2:hover { transform: translateZ(90px) scale(1.04); }
+        .iso-container:not(.has-selection) .floor-1:hover { transform: translateZ(12px) scale(1.04); }
 
         /* MAKE OTHER FLOORS COMPLETELY INVISIBLE WHEN ONE FLOOR IS SELECTED */
         .iso-container.has-selection .iso-layer:not(.selected) {
@@ -119,7 +121,7 @@
 
         /* Enlarge and center the selected floor so every individual room tag is easy to click */
         .iso-container.has-selection .iso-layer.selected {
-            transform: translateZ(40px) scale(1.38) !important;
+            transform: translateZ(40px) scale(1.42) !important;
             z-index: 50;
         }
 
@@ -195,8 +197,8 @@
             position: absolute;
             bottom: 6px;
             right: 6px;
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             background: rgba(255, 255, 255, 0.16);
             border: 1.5px solid rgba(255, 255, 255, 0.8);
             transform-style: preserve-3d;
@@ -207,29 +209,30 @@
         /* Upright Floating 3D Text Labels for Campus Areas */
         .iso-zone-tag {
             position: absolute;
-            transform: translateZ(16px) rotateZ(35deg) rotateX(-52deg);
-            padding: 2.5px 6px;
-            border-radius: 5px;
-            border: 1.5px solid rgba(255,255,255,0.95);
+            transform: translateZ(14px) rotateZ(32deg) rotateX(-50deg);
+            padding: 2px 5px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.92);
             color: #fff;
-            font-size: 8.5px;
+            font-size: 7.5px;
             font-weight: 800;
             white-space: nowrap;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.85);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.85);
             cursor: pointer;
             text-shadow: 0 1px 2px rgba(0,0,0,0.85);
             transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
         }
 
         .iso-zone-tag:hover, .iso-zone-tag.active-zone {
-            transform: translateZ(26px) rotateZ(35deg) rotateX(-52deg) scale(1.18);
+            transform: translateZ(26px) rotateZ(32deg) rotateX(-50deg) scale(1.22);
             border-color: #fde047;
             background-color: #0f172a !important;
             color: #fde047;
             z-index: 100;
         }
 
-        /* Floor Color Themes */
+        /* Floor Color Themes (7 Levels) */
+        .floor-7 { --top-bg: rgba(14, 165, 233, 0.45); --front-bg: rgba(2, 132, 199, 0.9); --right-bg: rgba(3, 105, 161, 0.92); --wall-border: rgba(186, 230, 253, 0.9); --glow-color: rgba(56, 189, 248, 0.5); }
         .floor-6 { --top-bg: rgba(219, 112, 147, 0.45); --front-bg: rgba(160, 50, 90, 0.9); --right-bg: rgba(180, 70, 110, 0.9); --wall-border: rgba(251, 207, 232, 0.85); --glow-color: rgba(236, 72, 153, 0.45); }
         .floor-5 { --top-bg: rgba(147, 112, 219, 0.45); --front-bg: rgba(109, 72, 185, 0.9); --right-bg: rgba(88, 53, 158, 0.92); --wall-border: rgba(216, 180, 254, 0.85); --glow-color: rgba(168, 85, 247, 0.45); }
         .floor-4 { --top-bg: rgba(239, 95, 85, 0.45); --front-bg: rgba(194, 59, 48, 0.9); --right-bg: rgba(158, 42, 34, 0.92); --wall-border: rgba(254, 202, 202, 0.85); --glow-color: rgba(239, 68, 68, 0.45); }
@@ -310,10 +313,10 @@
             <div>
                 <span class="inline-flex items-center space-x-1.5 bg-white/10 border border-white/20 px-3 py-0.5 rounded-full text-xs font-semibold text-blue-200 mb-2">
                     <i class="fas fa-cubes text-emerald-300"></i>
-                    <span>3D Spatial Blueprint + AI Object Recognition</span>
+                    <span>7-Level 3D Spatial Blueprint + AI Object Recognition</span>
                 </span>
                 <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Report Lost or Found Property</h1>
-                <p class="text-blue-100 text-xs sm:text-sm mt-1">Click a 3D floor to isolate it, choose the exact room/zone, and upload photos for AI matching.</p>
+                <p class="text-blue-100 text-xs sm:text-sm mt-1">Click any 3D floor (Rooftop L7 down to Underground) to isolate it, choose the exact room (01–12) or lab, and upload photos.</p>
             </div>
             <a href="smart_search.html" class="self-start sm:self-auto bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center">
                 <i class="fas fa-search mr-2"></i> Search Existing Items
@@ -325,30 +328,31 @@
     <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-            <!-- LEFT COLUMN: 6-LEVEL 3D ARCHITECTURAL HOLOGRAM MAP (7 cols) -->
+            <!-- LEFT COLUMN: 7-LEVEL 3D ARCHITECTURAL HOLOGRAM MAP (7 cols) -->
             <div class="lg:col-span-7 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-200">
                 <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
                     <div>
                         <h2 class="text-base font-extrabold text-gray-900 flex items-center">
                             <i class="fas fa-layer-group text-blue-600 mr-2"></i> 1. Select 3D Campus Level &amp; Room
                         </h2>
-                        <p class="text-xs text-gray-500">Click any floor to hide other levels and view all rooms clearly.</p>
+                        <p class="text-xs text-gray-500">Click any floor to hide other levels and view all 12 rooms &amp; facilities clearly.</p>
                     </div>
-                    <!-- Show All Floors Reset Button (No Top View needed) -->
+                    <!-- Show All 7 Floors Reset Button -->
                     <button type="button" id="show-all-floors-btn" onclick="clearFloorSelection()" class="hidden px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition flex items-center">
-                        <i class="fas fa-layer-group mr-1.5"></i> Show All 6 Floors
+                        <i class="fas fa-layer-group mr-1.5"></i> Show All 7 Floors
                     </button>
                 </div>
 
-                <!-- Quick Floor Pills (Allows instant switching even when 1 floor is isolated) -->
+                <!-- Quick Floor Pills (L7 Rooftop down to Underground) -->
                 <div class="flex flex-wrap items-center gap-1.5 mb-3">
                     <span class="text-[11px] font-bold text-gray-400 uppercase mr-1">Floor:</span>
-                    <button type="button" onclick="selectFloorByLevel('Level 6')" id="pill-Level 6" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100 transition">L6</button>
-                    <button type="button" onclick="selectFloorByLevel('Level 5')" id="pill-Level 5" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition">L5</button>
-                    <button type="button" onclick="selectFloorByLevel('Level 4')" id="pill-Level 4" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition">L4</button>
-                    <button type="button" onclick="selectFloorByLevel('Level 3')" id="pill-Level 3" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition">L3</button>
-                    <button type="button" onclick="selectFloorByLevel('Level 2')" id="pill-Level 2" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">L2</button>
-                    <button type="button" onclick="selectFloorByLevel('Underground - Carpark')" id="pill-Underground - Carpark" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">Underground</button>
+                    <button type="button" onclick="selectFloorByLevel('Level 7')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 transition">L7 (Rooftop)</button>
+                    <button type="button" onclick="selectFloorByLevel('Level 6')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100 transition">L6</button>
+                    <button type="button" onclick="selectFloorByLevel('Level 5')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition">L5</button>
+                    <button type="button" onclick="selectFloorByLevel('Level 4')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition">L4</button>
+                    <button type="button" onclick="selectFloorByLevel('Level 3')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition">L3</button>
+                    <button type="button" onclick="selectFloorByLevel('Level 2')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">L2</button>
+                    <button type="button" onclick="selectFloorByLevel('Underground - Carpark')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">Underground</button>
                     <button type="button" onclick="clearFloorSelection()" class="ml-auto px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition">All Floors</button>
                 </div>
 
@@ -356,38 +360,45 @@
                 <input type="hidden" id="campus_level" name="campus_level" value="">
 
                 <div class="iso-map-wrapper">
-                    <div class="iso-hud-hint" id="iso-hud-text">3D Campus Blueprint • Click Any Floor to Isolate It</div>
+                    <div class="iso-hud-hint" id="iso-hud-text">7-Level 3D Campus Blueprint • Click Any Floor to Isolate It</div>
 
                     <div class="iso-container" id="isoContainer">
-                        <!-- Level 6 -->
+                        <!-- Level 7 (Rooftop) -->
+                        <div class="iso-layer floor-7" data-level="Level 7">
+                            <div class="iso-front"></div>
+                            <div class="iso-right"></div>
+                            <div class="iso-top"></div>
+                        </div>
+
+                        <!-- Level 6 (Cafe-Rest Area & LR601-LR612) -->
                         <div class="iso-layer floor-6" data-level="Level 6">
                             <div class="iso-front"></div>
                             <div class="iso-right"></div>
                             <div class="iso-top"></div>
                         </div>
 
-                        <!-- Level 5 -->
+                        <!-- Level 5 (Library, LT, Middle Rest Area & LR501-LR512) -->
                         <div class="iso-layer floor-5" data-level="Level 5">
                             <div class="iso-front"></div>
                             <div class="iso-right"></div>
                             <div class="iso-top"></div>
                         </div>
 
-                        <!-- Level 4 -->
+                        <!-- Level 4 (Big Study Area & LR401-LR412) -->
                         <div class="iso-layer floor-4" data-level="Level 4">
                             <div class="iso-front"></div>
                             <div class="iso-right"></div>
                             <div class="iso-top"></div>
                         </div>
 
-                        <!-- Level 3 -->
+                        <!-- Level 3 (Cube Study Area, Thermofluid Lab, Lab A & LR301-LR312) -->
                         <div class="iso-layer floor-3" data-level="Level 3">
                             <div class="iso-front"></div>
                             <div class="iso-right"></div>
                             <div class="iso-top"></div>
                         </div>
 
-                        <!-- Level 2 -->
+                        <!-- Level 2 (Cafeteria, AI Lab, Middle Area, Study Area & LR201-LR212) -->
                         <div class="iso-layer floor-2" data-level="Level 2">
                             <div class="iso-front"></div>
                             <div class="iso-right"></div>
@@ -411,7 +422,7 @@
                             <span id="floor-name" class="font-bold text-sm"></span>
                         </div>
                         <button type="button" onclick="clearFloorSelection()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg font-bold transition">
-                            <i class="fas fa-th-large mr-1"></i> Show All Floors
+                            <i class="fas fa-th-large mr-1"></i> Show All 7 Floors
                         </button>
                     </div>
                     <!-- Easy-Click Room Chips for the Active Floor -->
@@ -442,6 +453,7 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Category</label>
                             <select id="category" class="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-sm font-semibold text-gray-800 focus:bg-white focus:border-blue-500 focus:outline-none">
+                                <option value="Auto-Detect" selected>Auto-Detect from Photo (Default)</option>
                                 <option value="Laptop/Computer">Laptop / Computer</option>
                                 <option value="Mobile Phone">Mobile Phone</option>
                                 <option value="Tablet">Tablet</option>
@@ -460,7 +472,7 @@
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
                                 <i class="fas fa-map-pin"></i>
                             </span>
-                            <input type="text" id="specific_location" placeholder="Click a 3D floor & room tag (e.g. Level 3 - LR305)" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-sm focus:bg-white focus:border-blue-500 focus:outline-none">
+                            <input type="text" id="specific_location" placeholder="Click a 3D floor & room tag (e.g. Level 6 - LR605 or Level 2 - AI Lab)" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-300 text-sm focus:bg-white focus:border-blue-500 focus:outline-none">
                         </div>
                     </div>
 
@@ -582,7 +594,27 @@
             }, 4000);
         }
 
-        // --- 3D FLOOR SELECTOR LOGIC (ISOLATES SELECTED FLOOR & SEPARATES ROOMS 1-BY-1) ---
+        // Helper to generate 12 nicely positioned 3D room tags (e.g. LR601-LR612, LR501-LR512, etc.)
+        function generateTwelveRooms(prefix) {
+            const rowsTop = ['38%', '58%', '78%'];
+            const colsLeft = ['6%', '27%', '48%', '69%'];
+            const roomTags = [];
+            let count = 1;
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const numStr = String(count).padStart(2, '0');
+                    roomTags.push({
+                        label: `${prefix}${numStr}`,
+                        top: rowsTop[r],
+                        left: colsLeft[c]
+                    });
+                    count++;
+                }
+            }
+            return roomTags;
+        }
+
+        // --- 7-LEVEL 3D FLOOR SELECTOR LOGIC ---
         const isoLayers = document.querySelectorAll('.iso-layer');
         const isoContainer = document.getElementById('isoContainer');
         const levelInput = document.getElementById('campus_level');
@@ -592,101 +624,101 @@
         const showAllFloorsBtn = document.getElementById('show-all-floors-btn');
         const hudText = document.getElementById('iso-hud-text');
 
-        // Separated LR301-308, LR401-408, LR501-508 1-by-1
         const campusLayout = {
+            'Level 7': {
+                levelValue: 'Level 7',
+                wallLabel: 'LEVEL 7 • ROOFTOP',
+                badgeColor: '#0284c7',
+                summary: 'Level 7 — Rooftop',
+                rooms: [
+                    { top: '12%', left: '12%', width: '74%', height: '68%' }
+                ],
+                zones: [
+                    { label: 'Rooftop', top: '42%', left: '34%' }
+                ]
+            },
             'Level 6': {
                 levelValue: 'Level 6',
                 wallLabel: 'LEVEL 6',
                 badgeColor: '#be185d',
-                summary: 'Level 6 — Balcony',
-                rooms: [{ top: '12%', left: '12%', width: '72%', height: '64%' }],
+                summary: 'Level 6 — Cafe-Rest Area, LR601 to LR612',
+                rooms: [
+                    { top: '6%', left: '6%', width: '82%', height: '24%' },
+                    { bottom: '6%', left: '6%', width: '78%', height: '58%' }
+                ],
                 zones: [
-                    { label: 'Balcony', top: '42%', left: '34%' }
+                    { label: 'Cafe-Rest Area', top: '12%', left: '28%' },
+                    ...generateTwelveRooms('LR6')
                 ]
             },
             'Level 5': {
                 levelValue: 'Level 5',
                 wallLabel: 'LEVEL 5',
                 badgeColor: '#6d28d9',
-                summary: 'Level 5 — LT, Middle Rest Area, LR501 to LR508',
+                summary: 'Level 5 — Library, LT, Middle Rest Area, LR501 to LR512',
                 rooms: [
-                    { top: '6%', left: '6%', width: '38%', height: '30%' },
-                    { top: '6%', right: '6%', width: '42%', height: '30%' },
-                    { bottom: '6%', left: '6%', width: '74%', height: '52%' }
+                    { top: '6%', left: '6%', width: '26%', height: '24%' },
+                    { top: '6%', left: '34%', width: '28%', height: '24%' },
+                    { top: '6%', right: '6%', width: '28%', height: '24%' },
+                    { bottom: '6%', left: '6%', width: '78%', height: '58%' }
                 ],
                 zones: [
-                    { label: 'LT', top: '14%', left: '14%' },
-                    { label: 'Middle Rest Area', top: '14%', right: '10%' },
-                    { label: 'LR501', top: '46%', left: '8%' },
-                    { label: 'LR502', top: '46%', left: '30%' },
-                    { label: 'LR503', top: '46%', left: '52%' },
-                    { label: 'LR504', top: '46%', left: '74%' },
-                    { label: 'LR505', bottom: '12%', left: '8%' },
-                    { label: 'LR506', bottom: '12%', left: '28%' },
-                    { label: 'LR507', bottom: '12%', left: '48%' },
-                    { label: 'LR508', bottom: '12%', left: '68%' }
+                    { label: 'LT', top: '12%', left: '8%' },
+                    { label: 'Library', top: '12%', left: '36%' },
+                    { label: 'Middle Rest Area', top: '12%', right: '6%' },
+                    ...generateTwelveRooms('LR5')
                 ]
             },
             'Level 4': {
                 levelValue: 'Level 4',
                 wallLabel: 'LEVEL 4',
                 badgeColor: '#b91c1c',
-                summary: 'Level 4 — Big Study Area, LR401 to LR408',
+                summary: 'Level 4 — Big Study Area, LR401 to LR412',
                 rooms: [
-                    { top: '6%', left: '6%', width: '82%', height: '32%' },
-                    { bottom: '6%', left: '6%', width: '74%', height: '52%' }
+                    { top: '6%', left: '6%', width: '82%', height: '24%' },
+                    { bottom: '6%', left: '6%', width: '78%', height: '58%' }
                 ],
                 zones: [
-                    { label: 'Big Study Area', top: '15%', left: '28%' },
-                    { label: 'LR401', top: '46%', left: '8%' },
-                    { label: 'LR402', top: '46%', left: '30%' },
-                    { label: 'LR403', top: '46%', left: '52%' },
-                    { label: 'LR404', top: '46%', left: '74%' },
-                    { label: 'LR405', bottom: '12%', left: '8%' },
-                    { label: 'LR406', bottom: '12%', left: '28%' },
-                    { label: 'LR407', bottom: '12%', left: '48%' },
-                    { label: 'LR408', bottom: '12%', left: '68%' }
+                    { label: 'Big Study Area', top: '12%', left: '28%' },
+                    ...generateTwelveRooms('LR4')
                 ]
             },
             'Level 3': {
                 levelValue: 'Level 3',
                 wallLabel: 'LEVEL 3',
                 badgeColor: '#1d4ed8',
-                summary: 'Level 3 — Cube Study Area, Thermofluid Lab, Lab A, LR301 to LR308',
+                summary: 'Level 3 — Cube Study Area, Thermofluid Lab, Lab A, LR301 to LR312',
                 rooms: [
-                    { top: '6%', left: '6%', width: '40%', height: '28%' },
-                    { top: '6%', right: '6%', width: '42%', height: '28%' },
-                    { top: '38%', right: '6%', width: '30%', height: '24%' },
-                    { bottom: '6%', left: '6%', width: '74%', height: '48%' }
+                    { top: '6%', left: '6%', width: '28%', height: '24%' },
+                    { top: '6%', left: '36%', width: '30%', height: '24%' },
+                    { top: '6%', right: '6%', width: '24%', height: '24%' },
+                    { bottom: '6%', left: '6%', width: '78%', height: '58%' }
                 ],
                 zones: [
-                    { label: 'Cube Study Area', top: '12%', left: '8%' },
-                    { label: 'Thermofluid Lab', top: '12%', right: '8%' },
-                    { label: 'Lab A', top: '42%', right: '10%' },
-                    { label: 'LR301', top: '44%', left: '8%' },
-                    { label: 'LR302', top: '44%', left: '27%' },
-                    { label: 'LR303', top: '44%', left: '46%' },
-                    { label: 'LR304', top: '62%', left: '8%' },
-                    { label: 'LR305', top: '62%', left: '27%' },
-                    { label: 'LR306', top: '62%', left: '46%' },
-                    { label: 'LR307', bottom: '10%', left: '14%' },
-                    { label: 'LR308', bottom: '10%', left: '40%' }
+                    { label: 'Cube Study Area', top: '12%', left: '6%' },
+                    { label: 'Thermofluid Lab', top: '12%', left: '36%' },
+                    { label: 'Lab A', top: '12%', right: '8%' },
+                    ...generateTwelveRooms('LR3')
                 ]
             },
             'Level 2': {
                 levelValue: 'Level 2',
                 wallLabel: 'LEVEL 2',
                 badgeColor: '#15803d',
-                summary: 'Level 2 — Cafeteria, Middle Area, Study Area',
+                summary: 'Level 2 — Cafeteria, AI Lab, Middle Area, Study Area, LR201 to LR212',
                 rooms: [
-                    { top: '8%', left: '8%', width: '44%', height: '38%' },
-                    { top: '34%', left: '34%', width: '34%', height: '30%' },
-                    { bottom: '10%', left: '8%', width: '54%', height: '30%' }
+                    { top: '6%', left: '6%', width: '20%', height: '24%' },
+                    { top: '6%', left: '28%', width: '20%', height: '24%' },
+                    { top: '6%', left: '50%', width: '20%', height: '24%' },
+                    { top: '6%', right: '6%', width: '20%', height: '24%' },
+                    { bottom: '6%', left: '6%', width: '78%', height: '58%' }
                 ],
                 zones: [
-                    { label: 'Cafeteria', top: '16%', left: '14%' },
-                    { label: 'Middle Area', top: '42%', left: '32%' },
-                    { label: 'Study Area', bottom: '16%', left: '16%' }
+                    { label: 'Cafeteria', top: '12%', left: '6%' },
+                    { label: 'AI Lab', top: '12%', left: '28%' },
+                    { label: 'Middle Area', top: '12%', left: '48%' },
+                    { label: 'Study Area', top: '12%', right: '6%' },
+                    ...generateTwelveRooms('LR2')
                 ]
             },
             'Level 1': {
@@ -694,14 +726,16 @@
                 wallLabel: 'UNDERGROUND',
                 badgeColor: '#b45309',
                 summary: 'Underground — Carpark',
-                rooms: [{ top: '10%', right: '10%', width: '36%', height: '44%' }],
+                rooms: [
+                    { top: '10%', right: '10%', width: '36%', height: '44%' }
+                ],
                 zones: [
                     { label: 'Carpark', top: '44%', left: '28%' }
                 ]
             }
         };
 
-        // Helper to render clickable room chips below the 3D map when a floor is isolated
+        // Render clickable room chips below the 3D map when a floor is isolated
         function renderActiveFloorRoomChips(cfg, selectedZoneLabel = null) {
             const roomContainer = document.getElementById('active-floor-rooms');
             roomContainer.innerHTML = '';
@@ -731,7 +765,6 @@
             isoContainer.classList.add('has-selection');
             showAllFloorsBtn.classList.remove('hidden');
 
-            // Highlight active 3D tag on the floor
             document.querySelectorAll('.iso-zone-tag').forEach(t => t.classList.remove('active-zone'));
             if (zoneLabel) {
                 targetLayer.querySelectorAll('.iso-zone-tag').forEach(t => {
@@ -742,7 +775,7 @@
             levelInput.value = cfg.levelValue;
             floorNameDisplay.innerText = zoneLabel ? `${cfg.levelValue} — ${zoneLabel}` : cfg.summary;
             floorFeedback.classList.remove('hidden');
-            hudText.innerText = `Isolated ${cfg.levelValue} • Click a Room Tag or "Show All 6 Floors"`;
+            hudText.innerText = `Isolated ${cfg.levelValue} • Click Any Room Tag (01–12) or "Show All 7 Floors"`;
 
             specificLocationInput.value = zoneLabel ? `${cfg.levelValue} - ${zoneLabel}` : cfg.levelValue;
             renderActiveFloorRoomChips(cfg, zoneLabel);
@@ -762,7 +795,7 @@
             showAllFloorsBtn.classList.add('hidden');
             levelInput.value = '';
             floorFeedback.classList.add('hidden');
-            hudText.innerText = '3D Campus Blueprint • Click Any Floor to Isolate It';
+            hudText.innerText = '7-Level 3D Campus Blueprint • Click Any Floor to Isolate It';
         }
 
         // Populate Each 3D Floor & Attach Click Listeners
@@ -905,12 +938,64 @@
             }
         }
 
+        // Helper: Reads the AI tags from your custom model and maps them to your 8 dropdown categories
+        function mapAiTagsToCategory(aiTags) {
+            if (!aiTags || !Array.isArray(aiTags)) return null;
+
+            const cnnToCategory = {
+                "key": "Keys",
+                "plastic bottle": "Water Bottle",
+                "tumbler": "Water Bottle",
+                "bottle": "Water Bottle",
+                "mug": "Water Bottle",
+                "mobile phone": "Mobile Phone",
+                "mobile_phone": "Mobile Phone",
+                "phone": "Mobile Phone",
+                "back_pack": "Bag/Backpack",
+                "bracelet": "Jewelry/Bracelet",
+                "earrings": "Jewelry/Bracelet",
+                "necklace": "Jewelry/Bracelet",
+                "pendant": "Jewelry/Bracelet",
+                "ring": "Jewelry/Bracelet",
+                "set": "Jewelry/Bracelet",
+                "laptop_computer": "Laptop/Computer",
+                "keyboard": "Laptop/Computer",
+                "mouse": "Laptop/Computer",
+                "headphones": "Laptop/Computer",
+                "speaker": "Laptop/Computer",
+                "calculator": "Other",
+                "bike_helmet": "Other",
+                "paper_notebook": "Other",
+                "pen": "Other",
+                "ruler": "Other",
+                "scissors": "Other",
+                "stapler": "Other"
+            };
+
+            // Check the highest-confidence AI tag first (e.g. "key (85%)" -> "key")
+            for (const rawTag of aiTags) {
+                const cleanName = rawTag.split("(")[0].trim().toLowerCase();
+                if (cnnToCategory[cleanName]) {
+                    return cnnToCategory[cleanName];
+                }
+            }
+            return null;
+        }
+
         async function submitFullReport() {
             const status = document.getElementById("status-message");
             const submitBtn = document.getElementById("submit-report-btn");
             const itemType = document.getElementById("item_type").value;
+            const categorySelect = document.getElementById("category");
             const selectedFloor = document.getElementById("campus_level").value;
             const rawSpecificLoc = document.getElementById("specific_location").value.trim();
+            const fileInput = document.getElementById("imageFiles");
+
+            // If user selected Auto-Detect but didn't upload a photo, prompt them
+            if (categorySelect.value === "Auto-Detect" && fileInput.files.length === 0) {
+                alert("Please either upload a photo for AI Auto-Detection or select an Item Category from the dropdown.");
+                return;
+            }
 
             const combinedLocation = selectedFloor && !rawSpecificLoc.includes(selectedFloor)
                 ? (rawSpecificLoc ? `${selectedFloor} - ${rawSpecificLoc}` : selectedFloor)
@@ -926,7 +1011,7 @@
             const activeUserId = localStorage.getItem("user_uid") || "anonymous";
 
             const itemData = {
-                title: document.getElementById("category").value,
+                title: categorySelect.value === "Auto-Detect" ? "Other" : categorySelect.value,
                 description: document.getElementById("description").value,
                 item_type: itemType,
                 campus_level: selectedFloor || null,
@@ -955,8 +1040,6 @@
                 const newItem = await itemResponse.json();
                 const itemId = newItem.id;
 
-                const fileInput = document.getElementById("imageFiles");
-
                 if (fileInput.files.length > 0) {
                     status.innerText = "Analyzing Images with AI... 🤖";
 
@@ -977,9 +1060,20 @@
                         const tagContainer = document.getElementById("tag-container");
                         tagContainer.innerHTML = "";
 
-                        imgData.ai_analysis[0].ai_tags.forEach(tag => {
+                        const topTags = imgData.ai_analysis[0].ai_tags || [];
+                        topTags.forEach(tag => {
                             tagContainer.innerHTML += `<span class="bg-blue-600 text-white px-2.5 py-1 rounded-full text-xs font-bold">${tag}</span>`;
                         });
+
+                        // Determine the true category from the AI scan (either from backend or frontend mapper)
+                        const detectedCategory = imgData.auto_corrected_category || mapAiTagsToCategory(topTags);
+
+                        // If AI detected a category (e.g. "Keys") and the dropdown was left on "Laptop/Computer" or doesn't match, auto-fix it!
+                        if (detectedCategory && categorySelect.value !== detectedCategory) {
+                            categorySelect.value = detectedCategory;
+                            tagContainer.innerHTML += `<span class="bg-emerald-600 text-white px-2.5 py-1 rounded-full text-xs font-extrabold ml-1">✅ Auto-Categorized: ${detectedCategory}</span>`;
+                            showToast(`🤖 AI detected "${detectedCategory}" from your photo and updated the category!`, "info");
+                        }
                     }
                 }
 
@@ -1110,7 +1204,7 @@
             }
         });
 
-        // --- Category-Specific Ownership Claim Verification Logic (With Duplicate Prevention & Multi-Claim Queue) ---
+        // --- Category-Specific Ownership Claim Verification Logic ---
         let currentClaimItemId = null;
         let currentItemCategory = "";
 
@@ -1118,7 +1212,6 @@
             const currentUserEmail = localStorage.getItem("user_email") || "anonymous@student.newinti.edu.my";
             const existingQueue = JSON.parse(localStorage.getItem(`claims_queue_${itemId}`) || "[]");
 
-            // Prevent the SAME user from submitting duplicate claims for the same item
             if (existingQueue.some(c => c.claimant_email === currentUserEmail)) {
                 alert("Duplicate Claim Blocked: You have already submitted an ownership claim for Item #" + itemId + ". Campus Security is reviewing your answers.");
                 return;
@@ -1194,7 +1287,6 @@
             document.getElementById('claim-modal').style.display = "none";
         }
 
-        // --- Submit Dynamic Claim (Stores Multi-Claim Queue + Sends to Backend) ---
         async function submitClaim() {
             const field1 = document.getElementById('dyn-f1').value.trim();
             const field2 = document.getElementById('dyn-f2').value.trim();
@@ -1207,7 +1299,6 @@
 
             const claimantEmail = localStorage.getItem("user_email") || "student@student.newinti.edu.my";
 
-            // Append this claim to the item's multi-claim queue so Admin can compare if 2 different students claim it
             const queueKey = `claims_queue_${currentClaimItemId}`;
             const existingQueue = JSON.parse(localStorage.getItem(queueKey) || "[]");
             const newClaimEntry = {
