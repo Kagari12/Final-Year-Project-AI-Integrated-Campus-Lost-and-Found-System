@@ -116,11 +116,11 @@
         <div class="max-w-3xl mx-auto text-center relative z-10">
             <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md border border-white/20 px-3.5 py-1 rounded-full text-xs font-semibold text-blue-100 mb-4">
                 <i class="fas fa-sparkles text-amber-300"></i>
-                <span>Fuzzy-Logic Natural Language Matching Engine</span>
+                <span>Location-Aware Fuzzy-Logic AI Matching Engine</span>
             </div>
             <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">AI Smart Search</h1>
             <p class="text-blue-100 text-sm sm:text-base mb-8 max-w-xl mx-auto">
-                Describe your item's color, brand, category, or where you lost it. Only active, unresolved campus items are shown.
+                Describe your item's color, brand, category, and room/floor (e.g., <b>"Blue iPad LR503"</b>). Matching locations automatically boost the AI confidence score!
             </p>
 
             <!-- Search Box -->
@@ -128,7 +128,7 @@
                 <div class="pl-4 pr-2 text-gray-400">
                     <i class="fas fa-search text-lg"></i>
                 </div>
-                <input type="text" id="searchInput" onkeypress="handleEnter(event)" placeholder="e.g., blue water tumbler with a scratch near library..." class="w-full px-3 py-3 text-gray-800 placeholder-gray-400 text-base focus:outline-none">
+                <input type="text" id="searchInput" onkeypress="handleEnter(event)" placeholder="e.g., Blue iPad LR503, or black wallet Level 2 Cafeteria..." class="w-full px-3 py-3 text-gray-800 placeholder-gray-400 text-base focus:outline-none">
                 <button onclick="clearSearch()" id="clearBtn" class="hidden text-gray-400 hover:text-gray-600 px-3 py-2" title="Clear search">
                     <i class="fas fa-times-circle"></i>
                 </button>
@@ -140,11 +140,11 @@
 
             <!-- Quick Example Chips -->
             <div class="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
-                <span class="text-blue-200 font-medium">Try searching:</span>
-                <button onclick="quickFill('Laptop')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">💻 Laptop</button>
-                <button onclick="quickFill('Water Bottle')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">🍼 Water Bottle</button>
-                <button onclick="quickFill('Mobile Phone')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">📱 Mobile Phone</button>
-                <button onclick="quickFill('Keys')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">🔑 Keys</button>
+                <span class="text-blue-200 font-medium">Try searching with location:</span>
+                <button onclick="quickFill('Blue iPad LR503')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">📱 Blue iPad LR503</button>
+                <button onclick="quickFill('Laptop Level 4')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">💻 Laptop Level 4</button>
+                <button onclick="quickFill('Water Bottle Cafeteria')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">🍼 Water Bottle Cafeteria</button>
+                <button onclick="quickFill('Keys Carpark')" class="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full text-white transition">🔑 Keys Carpark</button>
                 <button onclick="loadAllItems()" class="bg-emerald-500/25 hover:bg-emerald-500/40 border border-emerald-300/40 px-3 py-1 rounded-full text-emerald-100 font-semibold transition">📋 Browse All Active Items</button>
             </div>
         </div>
@@ -215,7 +215,7 @@
                 </div>
                 <h3 class="text-lg font-bold text-gray-800 mb-1">Ready to Scan Active Campus Database</h3>
                 <p class="text-sm text-gray-500 max-w-md mx-auto mb-5">
-                    Type a description in the search box above, or click below to view all currently active Lost &amp; Found items.
+                    Type an item description and location (e.g. "Blue iPad LR503") in the search box above, or click below to view all currently active Lost &amp; Found items.
                 </p>
                 <button onclick="loadAllItems()" class="bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs px-4 py-2.5 rounded-xl transition">
                     <i class="fas fa-list-ul mr-1.5"></i> Load All Active Items
@@ -260,7 +260,7 @@
         </div>
     </div>
 
-    <!-- ==================== SEARCH, FILTER, 360 VIEWER & CLAIM LOGIC ==================== -->
+    <!-- ==================== SEARCH, LOCATION SCORING, FILTER, 360 VIEWER & CLAIM LOGIC ==================== -->
     <script>
         let rawSearchResults = [];
         let allDatabaseItemsMap = {};
@@ -308,6 +308,110 @@
                 console.warn("Could not pre-fetch full item list:", e);
                 return [];
             }
+        }
+
+        // --- LEVENSHTEIN DISTANCE & LOCATION-AWARE CONFIDENCE SCORER ---
+        function levenshteinDistance(a, b) {
+            const matrix = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+            for (let j = 1; j <= b.length; j++) matrix[0][j] = j;
+            for (let i = 1; i <= a.length; i++) {
+                for (let j = 1; j <= b.length; j++) {
+                    const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j] + 1,
+                        matrix[i][j - 1] + 1,
+                        matrix[i - 1][j - 1] + cost
+                    );
+                }
+            }
+            return matrix[a.length][b.length];
+        }
+
+        function tokenSimilarity(wordA, wordB) {
+            if (!wordA || !wordB) return 0;
+            if (wordB.includes(wordA) || wordA.includes(wordB)) return 100;
+            const maxLen = Math.max(wordA.length, wordB.length);
+            if (maxLen === 0) return 100;
+            const dist = levenshteinDistance(wordA, wordB);
+            return Math.max(0, Math.round(((maxLen - dist) / maxLen) * 100));
+        }
+
+        // Location-Aware AI Confidence Calculator (Upgraded for Exact Room & Floor Precision)
+        function computeLocationAwareScore(query, item, backendBaseScore = 0) {
+            const queryRaw = query.toLowerCase().trim();
+            const locationStr = `${item.specific_location || ''} ${item.campus_level || ''}`.toLowerCase();
+            const titleDescStr = `${item.title || ''} ${item.description || ''}`.toLowerCase();
+
+            // 1. Base Text Similarity (Title & Description)
+            const stopWords = new Set(['in', 'at', 'near', 'on', 'the', 'a', 'an', 'with', 'by', 'from', 'lost', 'found', 'my']);
+            const queryTokens = queryRaw
+                .replace(/[^a-z0-9\s]/g, ' ')
+                .split(/\s+/)
+                .filter(w => w.length >= 2 && !stopWords.has(w));
+
+            if (queryTokens.length === 0) {
+                return { finalScore: backendBaseScore || 100, locationMatched: false };
+            }
+
+            let totalTokenScore = 0;
+            queryTokens.forEach(qToken => {
+                let bestSim = 0;
+                const words = `${titleDescStr} ${locationStr}`.split(/\s+/);
+                words.forEach(w => {
+                    const sim = tokenSimilarity(qToken, w);
+                    if (sim > bestSim) bestSim = sim;
+                });
+                totalTokenScore += bestSim;
+            });
+            let baseAvg = Math.round(totalTokenScore / queryTokens.length);
+
+            // 2. Precision Location Matching (Room Codes & Specific Floor Match)
+            let locationMatched = false;
+            let locationBoost = 0;
+
+            // Extract specific room codes from query (e.g., "lr405", "lr503", "lt", "lab a", "carpark")
+            const roomCodeMatch = queryRaw.match(/(?:lr\d+|\b[2-6]0[1-9]\b|\b[2-6]1[0-2]\b|ai\s*lab|library|rooftop|cafe-rest\s*area|lt|lab\s+[a-z]|carpark|cafeteria)/g);
+            if (roomCodeMatch && roomCodeMatch.length > 0) {
+                for (let rCode of roomCodeMatch) {
+                    if (locationStr.includes(rCode)) {
+                        locationMatched = true;
+                        locationBoost += 30; // Massive boost for exact room match (e.g. LR405)
+                        break;
+                    }
+                }
+            }
+
+            // Extract floor level from query (e.g., "level 4", "l4")
+            const floorMatch = queryRaw.match(/(?:level\s*\d|l\s*\d)/g);
+            if (floorMatch && floorMatch.length > 0) {
+                for (let fCode of floorMatch) {
+                    const normalizedFloor = fCode.replace(/\s+/g, ''); // e.g. "level4" or "l4"
+                    const normalizedItemLoc = locationStr.replace(/\s+/g, '');
+                    if (normalizedItemLoc.includes(normalizedFloor)) {
+                        locationMatched = true;
+                        locationBoost += 15; // Moderate boost for matching exact floor level
+                        break;
+                    }
+                }
+            }
+
+            // If no specific room/floor code was typed, check if the general location string appears as a substring
+            if (!locationMatched && locationStr.length > 3) {
+                // Avoid matching single stray numbers like "4"
+                const cleanQueryForSub = queryRaw.replace(/\b\d\b/g, '').trim();
+                if (cleanQueryForSub.length > 3 && locationStr.includes(cleanQueryForSub)) {
+                    locationMatched = true;
+                    locationBoost += 10;
+                }
+            }
+
+            let boostedScore = baseAvg + locationBoost;
+            if (backendBaseScore > 0 && locationMatched) {
+                boostedScore = Math.max(boostedScore, backendBaseScore + locationBoost);
+            }
+
+            const finalScore = Math.min(100, Math.max(baseAvg, boostedScore));
+            return { finalScore, locationMatched };
         }
 
         function handleEnter(event) {
@@ -366,6 +470,7 @@
                 title: foundItem.title || "Item",
                 description: foundItem.description || "No description provided.",
                 confidence: 100,
+                location_matched: false,
                 specific_location: foundItem.specific_location || "Campus Location",
                 latitude: foundItem.latitude,
                 longitude: foundItem.longitude,
@@ -378,7 +483,7 @@
             renderFilteredResults();
         }
 
-        // Perform AI Search against /search/?q= (Automatically filters out Resolved items)
+        // Perform AI Search against /search/?q= AND Location Metadata (Automatically filters out Resolved items)
         async function performSearch() {
             const queryInput = document.getElementById("searchInput");
             const query = queryInput.value.trim();
@@ -394,37 +499,51 @@
             container.innerHTML = `
                 <div class="bg-white rounded-2xl p-10 text-center border border-gray-100 shadow-sm">
                     <i class="fas fa-circle-notch fa-spin text-3xl text-blue-600 mb-3"></i>
-                    <p class="font-bold text-gray-800">AI is scanning active campus records... 🤔</p>
-                    <p class="text-xs text-gray-400 mt-1">Calculating fuzzy-logic similarity scores for "${query}"</p>
+                    <p class="font-bold text-gray-800">AI is scanning item descriptions &amp; 3D campus locations... 🤔</p>
+                    <p class="text-xs text-gray-400 mt-1">Calculating fuzzy-logic + location similarity scores for "${query}"</p>
                 </div>
             `;
 
             try {
-                await syncFullItemsMetadata();
+                const allItems = await syncFullItemsMetadata();
 
-                const response = await fetch(`http://127.0.0.1:8000/search/?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
+                let backendScoreMap = {};
+                try {
+                    const response = await fetch(`http://127.0.0.1:8000/search/?q=${encodeURIComponent(query)}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        (data.results || []).forEach(r => {
+                            backendScoreMap[r.id] = r.confidence ?? 0;
+                        });
+                    }
+                } catch (e) {
+                    console.warn("Using local location-aware fuzzy scorer:", e);
+                }
 
-                // Map and exclude any item marked as Resolved
-                rawSearchResults = (data.results || [])
-                    .map(resItem => {
-                        const extra = allDatabaseItemsMap[resItem.id] || {};
+                // Score all active items using hybrid Backend AI + Location-Aware Fuzzy Scorer
+                rawSearchResults = (allItems || [])
+                    .filter(item => !isItemResolved(item))
+                    .map(item => {
+                        const baseScore = backendScoreMap[item.id] || 0;
+                        const { finalScore, locationMatched } = computeLocationAwareScore(query, item, baseScore);
+
                         return {
-                            id: resItem.id,
-                            type: resItem.type || extra.item_type || "Found",
-                            title: resItem.title || extra.title || "Item",
-                            description: resItem.description || extra.description || "No description provided.",
-                            confidence: resItem.confidence ?? 100,
-                            specific_location: extra.specific_location || "Campus Location",
-                            latitude: extra.latitude,
-                            longitude: extra.longitude,
-                            days_lost: extra.days_lost ?? 0,
-                            claim_status: extra.claim_status || "Unclaimed",
-                            status: extra.status,
-                            report_date: extra.report_date
+                            id: item.id,
+                            type: item.item_type || "Found",
+                            title: item.title || "Item",
+                            description: item.description || "No description provided.",
+                            confidence: finalScore,
+                            location_matched: locationMatched,
+                            specific_location: item.specific_location || "Campus Location",
+                            latitude: item.latitude,
+                            longitude: item.longitude,
+                            days_lost: item.days_lost ?? 0,
+                            claim_status: item.claim_status || "Unclaimed",
+                            status: item.status,
+                            report_date: item.report_date
                         };
                     })
-                    .filter(item => !isItemResolved(item));
+                    .filter(item => item.confidence >= 35);
 
                 renderFilteredResults();
             } catch (error) {
@@ -468,6 +587,7 @@
                 title: item.title || "Item",
                 description: item.description || "No description provided.",
                 confidence: 100,
+                location_matched: false,
                 specific_location: item.specific_location || "Campus Location",
                 latitude: item.latitude,
                 longitude: item.longitude,
@@ -551,6 +671,10 @@
                     ? `${Number(item.latitude).toFixed(4)}, ${Number(item.longitude).toFixed(4)}`
                     : null;
 
+                const locationBoostBadge = item.location_matched
+                    ? `<span class="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700 border border-emerald-300"><i class="fas fa-check-circle mr-1"></i>Location Match (+Boost)</span>`
+                    : "";
+
                 let claimActionHTML = "";
                 if (item.type === "Found") {
                     const statusBadge = item.claim_status === "Pending Review"
@@ -585,8 +709,12 @@
                             <h3 class="text-lg font-extrabold text-gray-900">${item.title}</h3>
                             <p class="text-sm text-gray-600 leading-relaxed">${item.description}</p>
 
-                            <div class="pt-1 flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                                <span><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> <b>${item.specific_location}</b></span>
+                            <div class="pt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                                <span class="flex items-center flex-wrap">
+                                    <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+                                    <b>${item.specific_location}</b>
+                                    ${locationBoostBadge}
+                                </span>
                                 ${gpsCoords ? `<a href="campus_map.html" class="text-blue-600 hover:underline"><i class="fas fa-compass mr-1"></i>GPS: ${gpsCoords}</a>` : ''}
                             </div>
                         </div>
